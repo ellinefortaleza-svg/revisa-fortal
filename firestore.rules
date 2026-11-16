@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Qualquer pessoa com o link lê e registra itens do checklist.
+    // Só aceita gravações no formato do app e ninguém pode apagar.
+    match /itens/{itemId} {
+      allow read: if true;
+      allow create, update: if itemId.size() <= 10
+        && request.resource.data.keys().hasOnly(['s','obs','at','por','hist'])
+        && request.resource.data.s in ['pendente','andamento','concluido']
+        && request.resource.data.por is string
+        && request.resource.data.por.size() > 0
+        && request.resource.data.por.size() <= 60
+        && request.resource.data.obs is string
+        && request.resource.data.obs.size() <= 2000
+        && request.resource.data.hist is list
+        && request.resource.data.hist.size() <= 30;
+      allow delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
