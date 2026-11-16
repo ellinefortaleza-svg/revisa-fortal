@@ -167,6 +167,15 @@ details summary{cursor:pointer;font-size:13px;color:var(--rt);font-weight:600}
 .sign{display:flex;flex-wrap:wrap;gap:40px;margin-top:30px}
 .sign div{flex:1 1 220px;border-top:1px solid #111;padding-top:4px;font-size:12.5px;text-align:center}
 .rowbtns{display:flex;flex-wrap:wrap;gap:8px}
+.grid{font-size:12.5px}.grid th.c,.grid td.c{text-align:center;padding:5px 3px;min-width:34px}.grid td.nm{min-width:170px}.grid td.okc{background:var(--ok-soft)}
+.thumbs.big img{width:132px;height:132px}
+.kv{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 14px;font-size:14px}.kv span{color:var(--muted)}
+@media (max-width:480px){.kv{grid-template-columns:1fr}.kv b{margin-bottom:6px}}
+.ajrow{grid-template-columns:minmax(0,3fr) minmax(0,1fr) auto;align-items:end;margin-bottom:6px}.ajrow2{grid-template-columns:minmax(0,1fr) auto;align-items:end;margin-bottom:6px}
+@media (max-width:560px){.ajrow{grid-template-columns:minmax(0,1fr) auto}.ajrow .field:first-child{grid-column:1/-1}}
+details.wk{border-top:1px solid var(--line);padding-top:8px}details.wk summary{font-size:15px;color:var(--ink)}
+.report h4{margin:6px 0 0;font-size:14px}
+.chips a.chip{text-decoration:none}
 @media print{
   body{background:#fff}
   header.top,nav.tabs,.noprint,.toast,.modal{display:none!important}
@@ -204,13 +213,16 @@ const addDays=(k,n)=>{const x=pk(k);x.setDate(x.getDate()+n);return dKey(x)};
 const addMonths=(k,n)=>{const x=pk(k);x.setMonth(x.getMonth()+n);return dKey(x)};
 const diffDays=(a,b)=>Math.round((pk(b)-pk(a))/864e5);
 const fD=k=>k?k.split('-').reverse().join('/'):'—';
+const fDs=k=>k?k.split('-').reverse().slice(0,2).join('/'):'';
 const fT=iso=>{try{return new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}catch(e){return''}};
 const fDT=iso=>{try{return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){return''}};
 const isoDay=iso=>dKey(new Date(iso));
-const nowHM=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
 const uid=()=>Math.random().toString(36).slice(2,9);
-const fmtN=n=>typeof n==='number'?n.toLocaleString('pt-BR',{maximumFractionDigits:1}):(n??'');
 const plural=(n,a,b)=>n+' '+(n===1?a:b);
+const DOW=['dom','seg','ter','qua','qui','sex','sáb'];
+const weekKey=k=>{const d=pk(k);d.setDate(d.getDate()-((d.getDay()+6)%7));return dKey(d)};
+const weekLbl=w=>`${fD(w)} a ${fD(addDays(w,6))}`;
+const first=s=>String(s||'').split(/[ –-]/)[0];
 
 /* ---------- nome de quem registra ---------- */
 const WHO=()=>($('#who').value||'').trim();
@@ -223,46 +235,39 @@ function setConn(m,bad){const c=$('#conn');c.textContent=m;c.className='conn'+(b
 
 /* ---------- configuração padrão ---------- */
 const DEF={
-  equip:[{id:'camara',nome:'Câmara fria',tipo:'congelado'},{id:'fz1',nome:'Freezer 1',tipo:'congelado'},{id:'fz2',nome:'Freezer 2',tipo:'congelado'},{id:'ref1',nome:'Geladeira / refrigerador',tipo:'resfriado'}],
-  refeicoes:['Café da manhã','Almoço','Jantar'],
-  lim:{congelado:-18,resfriado:5,quente:60,recCong:-12,recRes:7,amostraH:72},
-  hig:[
-    {id:'h1',area:'Cozinha',tarefa:'Bancadas e superfícies de manipulação',freq:'diaria'},
-    {id:'h2',area:'Cozinha',tarefa:'Piso da cozinha e da área de cocção',freq:'diaria'},
-    {id:'h3',area:'Geral',tarefa:'Ralos e grelhas (cozinha, lavagem, corredor, freezers)',freq:'diaria'},
-    {id:'h4',area:'Geral',tarefa:'Lixeiras e retirada do lixo',freq:'diaria'},
-    {id:'h5',area:'Sanitários',tarefa:'Sanitários feminino e masculino',freq:'diaria'},
-    {id:'h6',area:'Abrigo de resíduos',tarefa:'Abrigo de resíduos e coletores',freq:'diaria'},
-    {id:'h7',area:'Cozinha',tarefa:'Utensílios, panelas e equipamentos após o uso',freq:'diaria'},
-    {id:'h8',area:'Cozinha',tarefa:'Lavatório de mãos abastecido (sabonete, papel, álcool)',freq:'diaria'},
-    {id:'h9',area:'Área de lavagem',tarefa:'Retirada de restos de alimentos do piso',freq:'diaria'},
-    {id:'h10',area:'Cozinha',tarefa:'Paredes e portas (inclusive porta de enrolar)',freq:'semanal'},
-    {id:'h11',area:'Geral',tarefa:'Telas milimétricas de janelas e aberturas',freq:'semanal'},
-    {id:'h12',area:'Cozinha',tarefa:'Coifa e exaustores (limpeza externa)',freq:'semanal'},
-    {id:'h13',area:'Área dos freezers',tarefa:'Freezers e câmara fria por dentro',freq:'semanal'},
-    {id:'h14',area:'Estoque',tarefa:'Prateleiras, estrados e paletes',freq:'semanal'},
-    {id:'h15',area:'Cocção menor',tarefa:'Passthrough',freq:'semanal'},
-    {id:'h16',area:'Entrada',tarefa:'Bebedouro',freq:'semanal'},
-    {id:'h17',area:'Geral',tarefa:'Luminárias e teto',freq:'mensal'},
-    {id:'h18',area:'Corredor',tarefa:'Armários dos funcionários',freq:'mensal'},
-    {id:'h19',area:'Transporte',tarefa:'Higienização interna dos veículos de transporte',freq:'semanal'}
+  rt:{nome:'',crn:''},
+  rotina:[
+    {id:'r1',nome:'Temperatura dos equipamentos — manhã',freq:'diaria'},
+    {id:'r2',nome:'Temperatura dos equipamentos — tarde',freq:'diaria'},
+    {id:'r3',nome:'Temperatura dos alimentos (cocção e distribuição)',freq:'diaria'},
+    {id:'r4',nome:'Coleta de amostras das refeições',freq:'diaria'},
+    {id:'r5',nome:'Descarte das amostras com prazo vencido',freq:'diaria'},
+    {id:'r6',nome:'Recebimento de mercadorias conferido',freq:'diaria'},
+    {id:'r7',nome:'Higienização diária conforme cronograma',freq:'diaria'},
+    {id:'r8',nome:'Checagem de higiene e conduta da equipe',freq:'diaria'},
+    {id:'r9',nome:'Lavatórios abastecidos (sabonete, papel toalha, álcool)',freq:'diaria'},
+    {id:'r10',nome:'Higienização semanal (telas, paredes, coifa, freezers por dentro)',freq:'semanal'},
+    {id:'r11',nome:'Conferência de validades e etiquetas (freezers e estoque)',freq:'semanal'}
+  ],
+  planilhas:[
+    {id:'p1',nome:'Temperatura dos equipamentos'},
+    {id:'p2',nome:'Temperatura dos alimentos'},
+    {id:'p3',nome:'Coleta e descarte de amostras'},
+    {id:'p4',nome:'Higienização'},
+    {id:'p5',nome:'Recebimento de mercadorias'},
+    {id:'p6',nome:'Checagem da equipe'}
   ]
 };
-const FREQ={diaria:'Diária',semanal:'Semanal',mensal:'Mensal'};
+const FREQ={diaria:'Diária',semanal:'Semanal'};
 let CFG=JSON.parse(JSON.stringify(DEF));
-const TIPOEQ={congelado:'Congelados',resfriado:'Resfriados',quente:'Quente'};
-const limTxt=t=>t==='quente'?`≥ ${CFG.lim.quente} °C`:`≤ ${CFG.lim[t]} °C`;
-const confEquip=(t,v)=>t==='quente'?v>=CFG.lim.quente:v<=CFG.lim[t];
-const ETAPAS=[{k:'Cocção (centro do alimento)',op:'>=',v:70},{k:'Reaquecimento',op:'>=',v:70},{k:'Distribuição quente',op:'>=',v:60},{k:'Distribuição fria',op:'<=',v:10},{k:'Resfriamento (após 2 horas)',op:'<=',v:10}];
-const etTxt=e=>`${e.op==='>='?'≥':'≤'} ${e.v} °C`;
 
 /* ---------- prazos e controles ---------- */
 const PRAZOS=[
-  {id:'pragas',g:'Controle de pragas',nome:'Dedetização / desratização do estabelecimento',m:6,o:'Certificado da empresa controladora de pragas (licenciada), com produtos usados e validade.'},
-  {id:'vei1',g:'Controle de pragas',nome:'Dedetização do veículo 1',m:6,o:'Exigência do relatório da Revisa.'},
-  {id:'vei2',g:'Controle de pragas',nome:'Dedetização do veículo 2',m:6,o:'Exigência do relatório da Revisa.'},
+  {id:'pragas',g:'Controle de pragas',nome:'Dedetização / desratização do estabelecimento',m:3,o:'Certificado da empresa controladora de pragas, com produtos usados e validade.'},
+  {id:'vei1',g:'Controle de pragas',nome:'Dedetização do veículo 1 (Strada TNY 8B34)',m:3,o:'Exigência do relatório da Revisa.'},
+  {id:'vei2',g:'Controle de pragas',nome:'Dedetização do veículo 2 (Bongo TNX 8D02)',m:3,o:'Exigência do relatório da Revisa.'},
   {id:'filtro',g:'Água',nome:'Troca do filtro do bebedouro',m:6,o:'Colar etiqueta no bebedouro com a data da troca (apontado no relatório).'},
-  {id:'caixa',g:'Água',nome:'Limpeza e desinfecção da caixa d\'água',m:6,o:'Registro ou certificado da empresa; obrigatório a cada 6 meses.'},
+  {id:'caixa',g:'Água',nome:'Limpeza e desinfecção da caixa d\'água',m:6,o:'Certificado da empresa; a cada 6 meses.'},
   {id:'agua',g:'Água',nome:'Análise de potabilidade da água',m:6,o:'Laudo de laboratório.'},
   {id:'mbp',g:'Documentação',nome:'Manual de Boas Práticas atualizado',m:12,o:'Assinado pela nutricionista RT. Apontado como desatualizado.'},
   {id:'pops',g:'Documentação',nome:'POPs (higienização, pragas, caixa d\'água, saúde dos manipuladores)',m:12,o:'Os 4 POPs obrigatórios, revisados junto com o Manual.'},
@@ -356,29 +361,34 @@ const NEXT={pendente:'andamento',andamento:'concluido',concluido:'pendente'};
 const PRAZO_REVISA='2026-12-09';
 
 /* ---------- dados ---------- */
-let REGS=[],ITENS={},DOCS={},HIG={},CFGLOADED=false;const FOTO=new Map();
-const todayRegs=t=>REGS.filter(r=>r.dia===TODAY()&&(!t||r.tipo===t));
+let REGS=[],PLAN=[],TREIN=[],ITENS={},DOCS={},CFGLOADED=false;const FOTO=new Map();
 const itemSt=id=>(ITENS[id]&&ITENS[id].s)||'pendente';
+const doneOn=(id,dia)=>REGS.find(r=>r.tipo==='rotina'&&r.itemId===id&&r.dia===dia);
+const doneWeek=(id,wk)=>REGS.find(r=>r.tipo==='rotina'&&r.itemId===id&&weekKey(r.dia)===wk);
+const planOf=(id,wk)=>PLAN.filter(r=>r.planId===id&&r.semana===wk);
+const daily=()=>CFG.rotina.filter(i=>i.freq==='diaria'),weekly=()=>CFG.rotina.filter(i=>i.freq==='semanal');
 
 /* ---------- fotos ---------- */
-async function compress(file){
+async function compress(file,max0){
   const url=URL.createObjectURL(file);
   try{
     const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
-    let max=1280,q=.62,out='';
-    for(let k=0;k<5;k++){const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);out=c.toDataURL('image/jpeg',q);if(out.length<650000)break;max*=.8;q=Math.max(.35,q-.08)}
+    let max=max0||1280,q=max0>1500?.72:.62,out='';
+    for(let k=0;k<6;k++){const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);out=c.toDataURL('image/jpeg',q);if(out.length<880000)break;max*=.85;q=Math.max(.4,q-.06)}
     return out;
   }finally{URL.revokeObjectURL(url)}
 }
-const PEND={};
-const fotoField=fid=>`<div class="field full"><span class="lbl">Fotos (opcional)</span><label class="fotobtn" for="${fid}-in">+ Tirar ou escolher foto</label><input type="file" id="${fid}-in" accept="image/*" multiple hidden><div class="thumbs" id="${fid}-pv"></div></div>`;
-function bindFotos(fid){PEND[fid]=[];const inp=$('#'+fid+'-in');if(!inp)return;inp.onchange=async()=>{for(const f of inp.files){try{PEND[fid].push(await compress(f))}catch(e){toast('Não foi possível ler essa imagem.',true)}}inp.value='';drawPend(fid)}}
+const PEND={},HI=new Set();
+const fotoField=(fid,lbl)=>`<div class="field full"><span class="lbl">${lbl||'Fotos (opcional)'}</span><label class="fotobtn" for="${fid}-in">+ Tirar ou escolher foto</label><input type="file" id="${fid}-in" accept="image/*" multiple hidden><div class="thumbs" id="${fid}-pv"></div></div>`;
+function bindFotos(fid){PEND[fid]=[];const inp=$('#'+fid+'-in');if(!inp)return;inp.onchange=async()=>{const n=inp.files.length;if(n)toast(n>1?`Preparando ${n} fotos…`:'Preparando foto…');for(const f of inp.files){try{PEND[fid].push(await compress(f,HI.has(fid)?2000:1280))}catch(e){toast('Não foi possível ler essa imagem.',true)}}inp.value='';drawPend(fid)}}
 function drawPend(fid){const pv=$('#'+fid+'-pv');if(!pv)return;pv.innerHTML=(PEND[fid]||[]).map((u,i)=>`<span class="pend"><img src="${u}" alt="Foto ${i+1}"><button type="button" data-i="${i}" aria-label="Remover foto">×</button></span>`).join('');$$('button',pv).forEach(b=>b.onclick=()=>{PEND[fid].splice(+b.dataset.i,1);drawPend(fid)})}
-async function upFotos(list,ref){const ids=[];for(const img of list){const r=await FS.addDoc(FS.collection(db,'fotos'),{img,ref,por:WHO(),at:new Date().toISOString()});ids.push(r.id)}return ids}
-const thumbs=ids=>ids&&ids.length?`<div class="thumbs">${ids.map(id=>`<img data-foto="${esc(id)}" alt="Foto do registro">`).join('')}</div>`:'';
+async function upFotos(list,ref){const ids=[];for(let i=0;i<list.length;i++){if(list.length>1)toast(`Enviando foto ${i+1} de ${list.length}…`);const r=await FS.addDoc(FS.collection(db,'fotos'),{img:list[i],ref,por:WHO(),at:new Date().toISOString()});ids.push(r.id)}return ids}
+const thumbs=(ids,big)=>ids&&ids.length?`<div class="thumbs${big?' big':''}">${ids.map(id=>`<img data-foto="${esc(id)}" alt="Foto do registro">`).join('')}</div>`:'';
 function getFoto(id){if(!FOTO.has(id))FOTO.set(id,FS.getDoc(FS.doc(db,'fotos',id)).then(s=>s.exists()?s.data().img:'').catch(()=>''));return FOTO.get(id)}
 const BLANK='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-function hydrate(root=document){if(!online)return Promise.resolve();return Promise.all($$('img[data-foto]:not([data-h])',root).map(async im=>{im.dataset.h='1';im.src=BLANK;const u=await getFoto(im.dataset.foto);if(u)im.src=u}))}
+async function loadImg(im){const u=await getFoto(im.dataset.foto);if(u)im.src=u}
+const IO='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){IO.unobserve(e.target);loadImg(e.target)}}),{rootMargin:'400px'}):null;
+function hydrate(root=document,eager){if(!online)return Promise.resolve();const L=$$('img[data-foto]:not([data-h])',root);L.forEach(im=>{im.dataset.h='1';im.src=BLANK});if(eager||!IO)return Promise.all(L.map(loadImg));L.forEach(im=>IO.observe(im));return Promise.resolve()}
 document.addEventListener('click',e=>{const im=e.target.closest('img[data-foto],.pend img');if(im&&im.src&&im.src!==BLANK){$('#lightImg').src=im.src;$('#light').hidden=false}});
 $('#light').onclick=()=>$('#light').hidden=true;
 
@@ -390,65 +400,46 @@ function F(fid,f){
   switch(f.t){
     case 'select':return `<div class="${cls}">${lab}<select id="${id}">${(f.o||[]).map(o=>{const v=typeof o==='object'?o.v:o,t=typeof o==='object'?o.t:o;return `<option value="${esc(v)}"${v===def?' selected':''}>${esc(t)}</option>`}).join('')}</select>${help}</div>`;
     case 'textarea':return `<div class="${cls}">${lab}<textarea id="${id}" rows="2" placeholder="${esc(f.ph||'')}">${esc(def)}</textarea>${help}</div>`;
-    case 'checks':return `<fieldset class="field full checks" id="${id}"><legend class="lbl">${esc(f.l)}</legend>${f.o.map((o,i)=>`<label class="chk"><input type="checkbox" value="${esc(o)}" id="${id}-${i}"${f.all?' checked':''}><span>${esc(o)}</span></label>`).join('')}</fieldset>`;
-    case 'radio':return `<fieldset class="field${f.full?' full':''}" id="${id}"><legend class="lbl">${esc(f.l)}${req}</legend><div class="segs">${f.o.map((o,i)=>`<label><input type="radio" name="${id}" value="${esc(o)}" id="${id}-${i}"${o===def?' checked':''}><span>${esc(o)}</span></label>`).join('')}</div></fieldset>`;
-    default:return `<div class="${cls}">${lab}<input id="${id}" type="${f.t||'text'}"${f.t==='number'?' step="any" inputmode="decimal"':''}${f.list?` list="${id}-dl"`:''} value="${esc(def)}" placeholder="${esc(f.ph||'')}">${f.list?`<datalist id="${id}-dl">${f.list.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`:''}${help}</div>`;
+    default:return `<div class="${cls}">${lab}<input id="${id}" type="${f.t||'text'}"${f.t==='number'?' step="any" inputmode="decimal"':''}${f.max?` max="${f.max()}"`:''}${f.list?` list="${id}-dl"`:''} value="${esc(def)}" placeholder="${esc(f.ph||'')}">${f.list?`<datalist id="${id}-dl">${f.list.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`:''}${help}</div>`;
   }
 }
-const formHTML=(fid,fields,btn,fotos=true)=>`<form class="form" id="${fid}" novalidate><div class="fgrid">${fields.map(f=>F(fid,f)).join('')}${fotos?fotoField(fid):''}</div><div class="factions"><button class="btn primary" type="submit">${esc(btn)}</button></div></form>`;
-function readForm(fid,fields){const v={};for(const f of fields){const id=`${fid}-${f.k}`;let x;
-  if(f.t==='checks')x=$$(`#${id} input:checked`).map(i=>i.value);
-  else if(f.t==='radio')x=($(`#${id} input:checked`)||{}).value||'';
-  else{x=$('#'+id).value.trim();if(f.t==='number'&&x!==''){x=Number(x.replace(',','.'));if(isNaN(x))return{err:`"${f.l}": número inválido.`}}}
-  if(f.req&&(x===''||x==null))return{err:`Preencha "${f.l}".`};v[f.k]=x}return{v}}
-function resetForm(fid,fields){const fm=$('#'+fid);if(!fm)return;fm.reset();fields.forEach(f=>{const e=$(`#${fid}-${f.k}`);if(e&&f.def!=null&&!['radio','checks','select'].includes(f.t))e.value=typeof f.def==='function'?f.def():f.def});PEND[fid]=[];drawPend(fid);fm.dispatchEvent(new Event('input'))}
+const formHTML=(fid,fields,btn,fotos=true,flbl)=>`<form class="form" id="${fid}" novalidate><div class="fgrid">${fields.map(f=>F(fid,f)).join('')}${fotos?fotoField(fid,flbl):''}</div><div class="factions"><button class="btn primary" type="submit">${esc(btn)}</button></div></form>`;
+function readForm(fid,fields){const v={};for(const f of fields){const id=`${fid}-${f.k}`;let x=$('#'+id).value.trim();if(f.t==='number'&&x!==''){x=Number(x.replace(',','.'));if(isNaN(x))return{err:`"${f.l}": número inválido.`}}if(f.req&&(x===''||x==null))return{err:`Preencha "${f.l}".`};v[f.k]=x}return{v}}
+function resetForm(fid,fields){const fm=$('#'+fid);if(!fm)return;fm.reset();fields.forEach(f=>{const e=$(`#${fid}-${f.k}`);if(e&&f.def!=null&&f.t!=='select')e.value=typeof f.def==='function'?f.def():f.def});PEND[fid]=[];drawPend(fid)}
 function bindForm(fid,fields,onSave,keep){bindFotos(fid);$('#'+fid).onsubmit=async e=>{e.preventDefault();if(!canSave())return;const r=readForm(fid,fields);if(r.err){toast(r.err,true);return}
   const btn=$(`#${fid} button[type=submit]`),old=btn.textContent;btn.disabled=true;btn.textContent='Salvando…';
   try{const ok=await onSave(r.v,PEND[fid]||[]);if(ok!==false){if(!keep)resetForm(fid,fields);else{PEND[fid]=[];drawPend(fid)}toast('Registrado por '+WHO()+'.')}}
   catch(err){console.error(err);toast('Não foi possível salvar ('+(err.code||err.message||'erro')+').',true)}
   finally{if(btn.isConnected){btn.disabled=false;btn.textContent=old}}}}
-async function addReg(tipo,data,fotosData,ids){const at=new Date().toISOString();const fotos=ids||(fotosData&&fotosData.length?await upFotos(fotosData,tipo):[]);const doc={tipo,dia:dKey(new Date(at)),at,por:WHO(),fotos};for(const k in data){if(data[k]!==undefined)doc[k]=data[k]}await FS.addDoc(FS.collection(db,'registros'),doc)}
+async function addReg(tipo,data,fotosData,ids,dia){const at=new Date().toISOString();const fotos=ids||(fotosData&&fotosData.length?await upFotos(fotosData,tipo):[]);const doc={tipo,dia:dia||dKey(new Date(at)),at,por:WHO(),fotos};for(const k in data){if(data[k]!==undefined)doc[k]=data[k]}await FS.addDoc(FS.collection(db,'registros'),doc)}
 
 /* ---------- modal ---------- */
-function openModal(title,fields,onSave,btn,after){const fid='m'+uid();$('#mbody').innerHTML=`<h3>${esc(title)}</h3>`+formHTML(fid,fields,btn||'Salvar');$('#modal').hidden=false;bindForm(fid,fields,async(v,f)=>{const r=await onSave(v,f);if(r!==false)closeModal();return r},true);after&&after(fid);setTimeout(()=>{const x=$('#mbody input:not([type=file]),#mbody textarea');x&&x.focus()},50)}
+function openModal(title,fields,onSave,o={}){const fid='m'+uid();if(o.hi)HI.add(fid);$('#mbody').innerHTML=`<h3>${esc(title)}</h3>${o.intro?`<p class="ref">${o.intro}</p>`:''}`+formHTML(fid,fields,o.btn||'Salvar',true,o.flbl);$('#modal').hidden=false;bindForm(fid,fields,async(v,f)=>{const r=await onSave(v,f);if(r!==false)closeModal();return r},true);o.after&&o.after(fid)}
 function closeModal(){$('#modal').hidden=true;$('#mbody').innerHTML=''}
 $('#mclose').onclick=closeModal;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();$('#light').hidden=true}});
 
-/* ---------- registros ---------- */
-const TIPOS={temp:'Temperatura de equipamento',tempalim:'Temperatura de alimento',amostra:'Amostra',higiene:'Higienização',receb:'Recebimento',equipe:'Checagem da equipe',trein:'Treinamento',ocorr:'Ocorrência'};
+/* ---------- descrição dos registros ---------- */
+const TIPOS={rotina:'Rotina',planilha:'Planilha',trein:'Treinamento',ocorr:'Ocorrência'};
 function desc(r){switch(r.tipo){
-  case 'temp':return{t:`${r.equipNome} · ${r.turno}`,d:`${fmtN(r.temp)} °C · limite ${r.lim}`,ok:r.conforme};
-  case 'tempalim':return{t:`${r.prep} · ${r.etapa}`,d:`${fmtN(r.temp)} °C · referência ${r.lim}`,ok:r.conforme};
-  case 'amostra':return{t:`${r.refeicao}: ${r.prep}`,d:`${r.qtd||'—'} g por preparação · coletada às ${r.hora}${r.tempArm!==''&&r.tempArm!=null?` · guardada a ${fmtN(r.tempArm)} °C`:''} · descartar a partir de ${fDT(r.descarteEm)}${r.descartada?` · DESCARTADA por ${r.descartada.por} em ${fDT(r.descartada.at)}`:''}`,ok:null};
-  case 'higiene':return{t:r.tarefa,d:`${r.area} · ${FREQ[r.freq]||r.freq}`,ok:true};
-  case 'receb':return{t:`${r.produto} · ${r.fornecedor}`,d:[r.nf&&'NF '+r.nf,r.categoria,r.temp!==''&&r.temp!=null?fmtN(r.temp)+' °C':'',r.validade&&'validade '+fD(r.validade),r.decisao].filter(Boolean).join(' · ')+(r.falhas&&r.falhas.length?' · Falhas: '+r.falhas.join('; '):''),ok:r.conforme};
-  case 'equipe':return{t:'Checagem da equipe',d:(r.presentes!==''&&r.presentes!=null?r.presentes+' presentes · ':'')+(r.nc&&r.nc.length?'Fora do padrão: '+r.nc.join('; '):'Todos os itens conformes')+(r.funcionarios?' · '+r.funcionarios:''),ok:r.conforme};
-  case 'trein':return{t:r.tema,d:[r.data&&fD(r.data),r.ministrante,r.ch!==''&&r.ch!=null&&r.ch+' h',r.participantes&&'Participantes: '+r.participantes].filter(Boolean).join(' · '),ok:null};
-  case 'ocorr':return{t:r.categoria,d:r.descricao,ok:null};
-  default:return{t:r.tipo,d:'',ok:null}}}
-const pill=ok=>ok===true?'<span class="pill ok">Conforme</span>':ok===false?'<span class="pill bad">Não conforme</span>':'';
-function regRow(r,o={}){const x=desc(r);return `<article class="reg${x.ok===false?' nc':''}"><div class="reg-h"><div class="reg-t">${o.tipo?`<span class="kind">${TIPOS[r.tipo]}</span>`:''}<strong>${esc(x.t)}</strong></div>${pill(x.ok)}</div><div class="reg-d">${esc(x.d)}</div>${r.acao?`<div class="reg-a"><b>Ação corretiva / orientação:</b> ${esc(r.acao)}</div>`:''}${r.obs?`<div class="reg-a">${esc(r.obs)}</div>`:''}${thumbs(r.fotos)}<div class="reg-m">${esc(r.por)} · ${fDT(r.at)}</div>${o.extra?o.extra(r):''}</article>`}
-function histByDay(list,o={}){if(!list.length)return `<p class="empty">${o.empty||'Nenhum registro nos últimos 8 dias.'}</p>`;const g={};list.forEach(r=>(g[r.dia]=g[r.dia]||[]).push(r));return Object.keys(g).sort().reverse().map(d=>`<h4 class="day">${d===TODAY()?'Hoje':fD(d)} <small>· ${plural(g[d].length,'registro','registros')}</small></h4><div class="regs">${g[d].map(r=>regRow(r,o)).join('')}</div>`).join('')}
+  case 'rotina':return{t:r.item,d:(r.dia!==isoDay(r.at)?`Referente a ${fD(r.dia)} · `:'')+(FREQ[r.freq]||'')};
+  case 'planilha':return{t:`Planilha: ${r.planilha}`,d:`Semana de ${weekLbl(r.semana)} · ${plural((r.fotos||[]).length,'foto','fotos')}`};
+  case 'trein':return{t:r.tema,d:[r.data&&fD(r.data),r.ministrante,r.ch!==''&&r.ch!=null&&r.ch+' h',r.participantes&&'Participantes: '+r.participantes].filter(Boolean).join(' · ')};
+  case 'ocorr':return{t:r.categoria,d:r.descricao};
+  default:return{t:r.tipo,d:''}}}
+function regRow(r,o={}){const x=desc(r);return `<article class="reg"><div class="reg-h"><div class="reg-t">${o.tipo?`<span class="kind">${TIPOS[r.tipo]||r.tipo}</span>`:''}<strong>${esc(x.t)}</strong></div></div>${x.d?`<div class="reg-d">${esc(x.d)}</div>`:''}${r.acao?`<div class="reg-a"><b>Ação tomada:</b> ${esc(r.acao)}</div>`:''}${r.obs?`<div class="reg-a">${esc(r.obs)}</div>`:''}${thumbs(r.fotos,o.big)}<div class="reg-m">${esc(r.por)} · ${fDT(r.at)}</div></article>`}
 
 /* ---------- status ---------- */
-const turnoAtual=()=>new Date().getHours()<13?'Manhã':'Tarde';
-function tempStatus(){const tr=todayRegs('temp');return CFG.equip.map(e=>({e,m:tr.find(r=>r.equipId===e.id&&r.turno==='Manhã'),t:tr.find(r=>r.equipId===e.id&&r.turno==='Tarde')}))}
-function higStatus(task){const l=HIG[task.id];if(!l||!l.at)return{done:false,last:null,late:true};const days=diffDays(isoDay(l.at),TODAY());const lim=task.freq==='diaria'?0:task.freq==='semanal'?6:30;return{done:days<=lim,last:l,days}}
 function prazoStatus(p){const d=DOCS[p.id];if(!d||!d.validade)return{k:'none',t:'Sem registro'};const n=diffDays(TODAY(),d.validade);if(n<0)return{k:'bad',t:`Vencido há ${plural(-n,'dia','dias')}`};if(n<=30)return{k:'warn',t:n===0?'Vence hoje':`Vence em ${plural(n,'dia','dias')}`};return{k:'ok',t:`Em dia · vence em ${fD(d.validade)}`}}
-const amostrasAbertas=()=>REGS.filter(r=>r.tipo==='amostra'&&!r.descartada);
-const amostrasDescartar=()=>amostrasAbertas().filter(r=>r.descarteEm&&new Date(r.descarteEm)<=new Date());
-
 function pendencias(){
-  const P=[];const h=new Date().getHours();
-  tempStatus().forEach(s=>{if(!s.m)P.push({t:`Temperatura da manhã: ${s.e.nome}`,v:'temperaturas',bad:h>=12});if(!s.t&&h>=13)P.push({t:`Temperatura da tarde: ${s.e.nome}`,v:'temperaturas',bad:h>=17})});
-  todayRegs('temp').filter(r=>r.conforme===false).forEach(r=>P.push({t:`${r.equipNome} fora do limite (${fmtN(r.temp)} °C): acompanhar ação corretiva`,v:'temperaturas',bad:true}));
-  const am=todayRegs('amostra');CFG.refeicoes.forEach(rf=>{if(!am.some(r=>r.refeicao===rf))P.push({t:`Coletar amostra: ${rf}`,v:'amostras'})});
-  amostrasDescartar().forEach(r=>P.push({t:`Amostra pode ser descartada: ${r.refeicao} de ${fD(r.dia)}`,v:'amostras'}));
-  const hd=CFG.hig.filter(t=>t.freq==='diaria'&&!higStatus(t).done);if(hd.length)P.push({t:`Higienização diária: ${plural(hd.length,'tarefa pendente','tarefas pendentes')}`,v:'higienizacao',bad:h>=16});
-  const ha=CFG.hig.filter(t=>t.freq!=='diaria'&&!higStatus(t).done);if(ha.length===1)P.push({t:`Higienização ${FREQ[ha[0].freq].toLowerCase()} atrasada: ${ha[0].tarefa}`,v:'higienizacao',bad:true});else if(ha.length)P.push({t:`Higienização semanal/mensal: ${ha.length} tarefas em atraso ou nunca registradas`,v:'higienizacao',bad:true});
-  if(!todayRegs('equipe').length)P.push({t:'Checagem de higiene e conduta da equipe',v:'equipe'});
-  PRAZOS.forEach(p=>{const s=prazoStatus(p);if(s.k==='bad')P.push({t:`${p.nome}: ${s.t.toLowerCase()}`,v:'prazos',bad:true});else if(s.k==='warn')P.push({t:`${p.nome}: ${s.t.toLowerCase()}`,v:'prazos'});});const pn=PRAZOS.filter(p=>prazoStatus(p).k==='none');if(pn.length)P.push({t:`Prazos e controles: ${plural(pn.length,'item sem data registrada','itens sem data registrada')} (dedetização, filtro, caixa d'água…)`,v:'prazos'});
+  const P=[],h=new Date().getHours(),t=TODAY(),wk=weekKey(t),wd=pk(t).getDay();
+  const dn=daily().filter(i=>!doneOn(i.id,t));if(dn.length)P.push({t:`Rotina de hoje: ${plural(dn.length,'item sem marcar','itens sem marcar')}`,v:'rotina',bad:h>=17});
+  const y=addDays(t,-1),yn=daily().filter(i=>!doneOn(i.id,y));if(yn.length&&REGS.some(r=>r.tipo==='rotina'&&r.dia<=y))P.push({t:`Ontem (${fD(y)}) ficaram ${plural(yn.length,'item','itens')} sem marcar`,v:'rotina',bad:true});
+  const wn=weekly().filter(i=>!doneWeek(i.id,wk));if(wn.length&&(wd===0||wd>=4))P.push({t:`Rotina semanal: ${plural(wn.length,'item pendente','itens pendentes')} nesta semana`,v:'rotina',bad:wd===0||wd===6});
+  if(wd===0||wd>=5){const pn=CFG.planilhas.filter(p=>!planOf(p.id,wk).length);if(pn.length)P.push({t:`Sexta-feira: enviar fotos de ${plural(pn.length,'planilha','planilhas')} desta semana`,v:'planilhas',bad:wd!==5})}
+  const lw=addDays(wk,-7),lp=CFG.planilhas.filter(p=>!planOf(p.id,lw).length);if(lp.length&&PLAN.some(r=>r.semana<=lw))P.push({t:`Semana passada (${weekLbl(lw)}): faltam fotos de ${plural(lp.length,'planilha','planilhas')}`,v:'planilhas',bad:true});
+  PRAZOS.forEach(p=>{const s=prazoStatus(p);if(s.k==='bad')P.push({t:`${p.nome}: ${s.t.toLowerCase()}`,v:'prazos',bad:true});else if(s.k==='warn')P.push({t:`${p.nome}: ${s.t.toLowerCase()}`,v:'prazos'})});
+  const pz=PRAZOS.filter(p=>prazoStatus(p).k==='none');if(pz.length)P.push({t:`Prazos e controles: ${plural(pz.length,'item sem data registrada','itens sem data registrada')}`,v:'prazos'});
   const risk=ITEMS.filter(i=>i[6]&&itemSt(i[0])!=='concluido');if(risk.length)P.push({t:`Relatório Revisa: ${plural(risk.length,'item de risco imediato aberto','itens de risco imediato abertos')}`,v:'revisa',bad:true});
   return P.sort((a,b)=>(b.bad?1:0)-(a.bad?1:0));
 }
@@ -459,168 +450,93 @@ const VIEWS={};let CUR='hoje';
 VIEWS.hoje={tab:'Hoje',title:'Painel do dia',
   html:()=>`<p class="vs" id="h-date"></p><section class="tiles" id="h-tiles"></section>
   <section class="card"><h3>O que falta fazer</h3><div id="h-pend"></div></section>
-  <section class="card"><h3>Temperaturas de hoje</h3><div class="tgrid" id="h-temp"></div></section>
   <section class="card"><h3>Movimentação de hoje <small id="h-fc"></small></h3><div id="h-feed"></div></section>`,
   refresh(){
+    const t=TODAY(),wk=weekKey(t);
     $('#h-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-    const ts=tempStatus(),tot=ts.length*2,feit=ts.reduce((a,s)=>a+(s.m?1:0)+(s.t?1:0),0);
-    const am=new Set(todayRegs('amostra').map(r=>r.refeicao)),amN=CFG.refeicoes.filter(r=>am.has(r)).length;
-    const hd=CFG.hig.filter(t=>t.freq==='diaria'),hdN=hd.filter(t=>higStatus(t).done).length;
-    const eq=todayRegs('equipe').length>0;
-    const done=ITEMS.filter(i=>itemSt(i[0])==='concluido').length,dl=diffDays(TODAY(),PRAZO_REVISA);
-    const pz=PRAZOS.map(prazoStatus),pzBad=pz.filter(s=>s.k==='bad').length,pzWarn=pz.filter(s=>s.k==='warn'||s.k==='none').length;
+    const d=daily(),dn=d.filter(i=>doneOn(i.id,t)).length;
+    const pl=CFG.planilhas.filter(p=>planOf(p.id,wk).length).length;
+    const done=ITEMS.filter(i=>itemSt(i[0])==='concluido').length,dl=diffDays(t,PRAZO_REVISA);
+    const pz=PRAZOS.map(prazoStatus),pzBad=pz.filter(s=>s.k==='bad').length,pzWarn=pz.filter(s=>s.k!=='ok').length;
     const cls=(a,b)=>a>=b?'ok':a>0?'warn':'bad';
     $('#h-tiles').innerHTML=[
-      [`${feit}/${tot}`,'Temperaturas registradas','temperaturas',cls(feit,tot)],
-      [`${amN}/${CFG.refeicoes.length}`,'Amostras coletadas','amostras',cls(amN,CFG.refeicoes.length)],
-      [`${hdN}/${hd.length}`,'Higienização diária','higienizacao',cls(hdN,hd.length)],
-      [eq?'Feita':'Pendente','Checagem da equipe','equipe',eq?'ok':'warn'],
+      [`${dn}/${d.length}`,'Rotina de hoje','rotina',cls(dn,d.length)],
+      [`${pl}/${CFG.planilhas.length}`,'Planilhas da semana (enviar na sexta)','planilhas',pl>=CFG.planilhas.length?'ok':'warn'],
       [`${done}/${ITEMS.length}`,`Revisa · ${dl<0?'prazo vencido':plural(dl,'dia restante','dias restantes')}`,'revisa',done===ITEMS.length?'ok':dl<=7?'bad':'warn'],
       [pzBad?`${pzBad} vencido${pzBad>1?'s':''}`:pzWarn?`${pzWarn} a ver`:'Em dia','Prazos e controles','prazos',pzBad?'bad':pzWarn?'warn':'ok']
     ].map(([b,s,v,c])=>`<a class="tile ${c}" href="#${v}"><b>${b}</b><span>${s}</span></a>`).join('');
     const P=pendencias();
     $('#h-pend').innerHTML=P.length?`<ul class="plist">${P.map(p=>`<li class="${p.bad?'bad':''}"><a href="#${p.v}">${esc(p.t)}</a></li>`).join('')}</ul>`:'<p class="allok">Tudo em dia hoje.</p>';
-    $('#h-temp').innerHTML=tempTable();
     const F=feedToday();$('#h-fc').textContent=F.length?'· '+plural(F.length,'registro','registros'):'';
-    $('#h-feed').innerHTML=F.length?`<ul class="feed">${F.map(f=>`<li><time>${fT(f.at)}</time><div><b>${esc(f.k)}:</b> ${esc(f.t)} ${f.ok===false?'<span class="pill bad">Não conforme</span>':''}<div class="by">${esc(f.por)}</div></div></li>`).join('')}</ul>`:'<p class="empty">Nenhum registro hoje ainda. O primeiro registro feito em qualquer aba aparece aqui.</p>';
+    $('#h-feed').innerHTML=F.length?`<ul class="feed">${F.map(f=>`<li><time>${fT(f.at)}</time><div><b>${esc(f.k)}:</b> ${esc(f.t)}<div class="by">${esc(f.por)}</div></div></li>`).join('')}</ul>`:'<p class="empty">Nenhum registro hoje ainda. O primeiro item marcado na rotina aparece aqui.</p>';
   }};
-function tempTable(){const ts=tempStatus();const c=r=>r?`<td class="${r.conforme?'okc':'badc'}">${fmtN(r.temp)} °C<br><small>${esc(r.por.split(' ')[0])} ${fT(r.at)}</small></td>`:'<td class="mis">—</td>';
-  return `<table><thead><tr><th>Equipamento</th><th>Limite</th><th>Manhã</th><th>Tarde</th></tr></thead><tbody>${ts.map(s=>`<tr><td>${esc(s.e.nome)}</td><td>${limTxt(s.e.tipo)}</td>${c(s.m)}${c(s.t)}</tr>`).join('')}</tbody></table>`}
-function feedToday(){const L=[];todayRegs().forEach(r=>{const x=desc(r);L.push({at:r.at,por:r.por,k:TIPOS[r.tipo],t:x.t+(r.tipo==='temp'||r.tipo==='tempalim'?' · '+fmtN(r.temp)+' °C':''),ok:x.ok});if(r.descartada&&isoDay(r.descartada.at)===TODAY())L.push({at:r.descartada.at,por:r.descartada.por,k:'Amostra descartada',t:r.refeicao+' de '+fD(r.dia)})});
-  REGS.filter(r=>r.descartada&&r.dia!==TODAY()&&isoDay(r.descartada.at)===TODAY()).forEach(r=>L.push({at:r.descartada.at,por:r.descartada.por,k:'Amostra descartada',t:r.refeicao+' de '+fD(r.dia)}));
-  ITEMS.forEach(i=>{(ITENS[i[0]]?.hist||[]).forEach(h=>{if(isoDay(h.at)===TODAY())L.push({at:h.at,por:h.por,k:'Relatório Revisa',t:`${h.o} · ${i[2]}`})})});
-  PRAZOS.forEach(p=>{(DOCS[p.id]?.hist||[]).forEach(h=>{if(isoDay(h.at)===TODAY())L.push({at:h.at,por:h.por,k:'Prazos',t:`${p.nome} · ${h.o}`})})});
+function feedToday(){const L=[],t=TODAY();
+  REGS.filter(r=>isoDay(r.at)===t).forEach(r=>{const x=desc(r);L.push({at:r.at,por:r.por,k:TIPOS[r.tipo]||r.tipo,t:x.t+(r.tipo==='rotina'&&r.dia!==t?` (referente a ${fD(r.dia)})`:'')})});
+  PLAN.filter(r=>isoDay(r.at)===t&&!REGS.includes(r)&&!REGS.some(x=>x.id===r.id)).forEach(r=>L.push({at:r.at,por:r.por,k:'Planilha',t:r.planilha}));
+  ITEMS.forEach(i=>{(ITENS[i[0]]?.hist||[]).forEach(h=>{if(isoDay(h.at)===t)L.push({at:h.at,por:h.por,k:'Relatório Revisa',t:`${h.o} · ${i[2]}`})})});
+  PRAZOS.forEach(p=>{(DOCS[p.id]?.hist||[]).forEach(h=>{if(isoDay(h.at)===t)L.push({at:h.at,por:h.por,k:'Prazos',t:`${p.nome} · ${h.o}`})})});
   return L.sort((a,b)=>b.at.localeCompare(a.at))}
 
-/* temperaturas */
-const fTemp=()=>[
-  {k:'equip',l:'Equipamento',t:'select',o:CFG.equip.map(e=>({v:e.id,t:`${e.nome} (${limTxt(e.tipo)})`})),req:true},
-  {k:'turno',l:'Turno',t:'radio',o:['Manhã','Tarde'],def:turnoAtual,req:true},
-  {k:'temp',l:'Temperatura medida (°C)',t:'number',req:true,ph:'Ex.: -18',help:''},
-  {k:'acao',l:'Ação corretiva (obrigatória se estiver fora do limite)',t:'textarea',ph:'Ex.: porta estava aberta; fechada e nova medição em 30 min'}];
-const fAlim=()=>[
-  {k:'prep',l:'Preparação',req:true,ph:'Ex.: frango assado'},
-  {k:'etapa',l:'Etapa',t:'select',o:ETAPAS.map(e=>({v:e.k,t:`${e.k} (${etTxt(e)})`})),req:true},
-  {k:'temp',l:'Temperatura medida (°C)',t:'number',req:true,help:''},
-  {k:'acao',l:'Ação corretiva (obrigatória se estiver fora da referência)',t:'textarea'}];
-VIEWS.temperaturas={tab:'Temperaturas',title:'Temperaturas',sub:'Registre duas vezes ao dia cada equipamento de frio, e a temperatura dos alimentos na cocção e na distribuição.',
-  html:()=>`<section class="card"><h3>Equipamentos de hoje</h3><div class="tgrid" id="t-grid"></div></section>
-  <section class="card"><h3>Registrar equipamento</h3>${formHTML('ft',fTemp(),'Registrar temperatura')}</section>
-  <section class="card"><h3>Registrar temperatura de alimento</h3><p class="ref">Referências usuais: cocção ≥ 70 °C no centro; distribuição quente ≥ 60 °C; distribuição fria ≤ 10 °C; resfriamento de 60 °C para 10 °C em até 2 horas. Ajuste conforme o Manual de Boas Práticas.</p>${formHTML('fa',fAlim(),'Registrar temperatura do alimento')}</section>
-  <section class="card"><h3>Histórico (8 dias)</h3><div id="t-hist"></div></section>`,
-  bind(){
-    const ft=fTemp(),fa=fAlim();
-    const live=()=>{const e=CFG.equip.find(x=>x.id===$('#ft-equip').value),v=$('#ft-temp').value,h=$('#ft-temp-h');if(!e||v===''){h.textContent=e?`Limite: ${limTxt(e.tipo)}`:'';h.className='help';return}const ok=confEquip(e.tipo,Number(v.replace(',','.')));h.textContent=ok?`Dentro do limite (${limTxt(e.tipo)})`:`Fora do limite (${limTxt(e.tipo)}): descreva a ação corretiva`;h.className='help '+(ok?'ok':'bad')};
-    $('#ft').addEventListener('input',live);$('#ft').addEventListener('change',live);live();
-    bindForm('ft',ft,async(v,f)=>{const e=CFG.equip.find(x=>x.id===v.equip);const ok=confEquip(e.tipo,v.temp);if(!ok&&!v.acao){toast('Temperatura fora do limite: descreva a ação corretiva.',true);return false}
-      await addReg('temp',{equipId:e.id,equipNome:e.nome,equipTipo:e.tipo,turno:v.turno,temp:v.temp,lim:limTxt(e.tipo),conforme:ok,acao:v.acao},f)});
-    const liveA=()=>{const e=ETAPAS.find(x=>x.k===$('#fa-etapa').value),v=$('#fa-temp').value,h=$('#fa-temp-h');if(v===''){h.textContent=`Referência: ${etTxt(e)}`;h.className='help';return}const n=Number(v.replace(',','.')),ok=e.op==='>='?n>=e.v:n<=e.v;h.textContent=ok?'Dentro da referência':'Fora da referência: descreva a ação corretiva';h.className='help '+(ok?'ok':'bad')};
-    $('#fa').addEventListener('input',liveA);$('#fa').addEventListener('change',liveA);liveA();
-    bindForm('fa',fa,async(v,f)=>{const e=ETAPAS.find(x=>x.k===v.etapa);const ok=e.op==='>='?v.temp>=e.v:v.temp<=e.v;if(!ok&&!v.acao){toast('Fora da referência: descreva a ação corretiva.',true);return false}
-      await addReg('tempalim',{prep:v.prep,etapa:v.etapa,temp:v.temp,lim:etTxt(e),conforme:ok,acao:v.acao},f)});
-  },
-  refresh(){$('#t-grid').innerHTML=tempTable();$('#t-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='temp'||r.tipo==='tempalim'),{tipo:true})}};
-
-/* amostras */
-const fAm=()=>[
-  {k:'refeicao',l:'Refeição',t:'select',o:CFG.refeicoes,req:true},
-  {k:'prep',l:'Preparações coletadas',req:true,ph:'Ex.: arroz, feijão, frango assado, salada',full:true},
-  {k:'qtd',l:'Quantidade por preparação (g)',t:'number',def:100},
-  {k:'hora',l:'Hora da coleta',t:'time',def:nowHM,req:true},
-  {k:'tempArm',l:'Temperatura de guarda (°C)',t:'number',ph:'Ex.: 3'},
-  {k:'obs',l:'Observações',t:'textarea',ph:'Ex.: amostras identificadas e guardadas na geladeira 1'}];
-VIEWS.amostras={tab:'Amostras',title:'Amostras',sub:'Colete uma amostra de cada preparação servida, em embalagem descartável identificada (preparação, data e hora), e guarde sob refrigeração pelo prazo definido no Manual de Boas Práticas.',
-  html:()=>`<section class="card"><h3>Para descartar</h3><div id="a-desc"></div></section>
-  <section class="card"><h3>Registrar coleta</h3><p class="ref" id="a-ref"></p>${formHTML('fam',fAm(),'Registrar amostra')}</section>
-  <section class="card"><h3>Em guarda</h3><div id="a-guarda" class="regs"></div></section>
-  <section class="card"><h3>Histórico (8 dias)</h3><div id="a-hist"></div></section>`,
-  bind(){$('#a-ref').textContent=`Prazo de guarda configurado: ${CFG.lim.amostraH} horas. Uma amostra de cerca de 100 g por preparação.`;
-    bindForm('fam',fAm(),async(v,f)=>{const[hh,mm]=v.hora.split(':').map(Number);const c=new Date();c.setHours(hh,mm,0,0);const de=new Date(c.getTime()+CFG.lim.amostraH*36e5).toISOString();
-      await addReg('amostra',{refeicao:v.refeicao,prep:v.prep,qtd:v.qtd,hora:v.hora,tempArm:v.tempArm,obs:v.obs,descarteEm:de},f)})},
+/* rotina */
+let RODIA=null;
+VIEWS.rotina={tab:'Rotina diária',title:'Rotina diária',sub:'Os registros detalhados ficam nas planilhas de papel. Aqui a nutricionista marca o que foi feito; cada marcação grava nome, data e hora.',
+  html:()=>`<section class="card"><div class="field" style="max-width:260px"><label class="lbl" for="ro-dia">Dia</label><input type="date" id="ro-dia"></div><p class="help" id="ro-dh"></p></section>
+  <section class="card"><h3>Diária <small id="ro-dc"></small></h3><div id="ro-d"></div></section>
+  <section class="card"><h3>Semanal <small id="ro-sc"></small></h3><div id="ro-s"></div></section>
+  <section class="card"><h3>Últimos 14 dias</h3><div class="tgrid" id="ro-grid"></div></section>`,
+  bind(){RODIA=TODAY();const i=$('#ro-dia');i.value=RODIA;i.max=TODAY();i.onchange=()=>{if(i.value&&i.value<=TODAY()){RODIA=i.value;this.refresh()}else i.value=RODIA}},
   refresh(){
-    const btn=r=>!r.descartada?`<div class="rowbtns"><button class="btn sm" data-desc="${r.id}" type="button">Registrar descarte</button></div>`:'';
-    const d=amostrasDescartar();$('#a-desc').innerHTML=d.length?`<div class="regs">${d.map(r=>regRow(r,{extra:btn})).join('')}</div>`:'<p class="empty">Nenhuma amostra com prazo de guarda vencido.</p>';
-    const g=amostrasAbertas().filter(r=>!d.includes(r));$('#a-guarda').innerHTML=g.length?g.map(r=>regRow(r)).join(''):'<p class="empty">Nenhuma amostra em guarda.</p>';
-    $('#a-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='amostra'));
-    $$('[data-desc]').forEach(b=>b.onclick=async()=>{if(!canSave())return;b.disabled=true;try{await FS.updateDoc(FS.doc(db,'registros',b.dataset.desc),{descartada:{at:new Date().toISOString(),por:WHO()}});toast('Descarte registrado.')}catch(e){b.disabled=false;toast('Não foi possível registrar o descarte.',true)}})}};
+    const dia=RODIA||TODAY(),wk=weekKey(dia);
+    $('#ro-dh').textContent=dia===TODAY()?'Marcando o dia de hoje.':`Marcando ${DOW[pk(dia).getDay()]} ${fD(dia)}. A marcação fica com a data e a hora reais em que foi feita.`;
+    const row=(it,r)=>`<div class="task"><div><div class="tt">${esc(it.nome)}</div><div class="tm">${r?`Feito · ${esc(r.por)} · registrado ${fDT(r.at)}${r.obs?' · '+esc(r.obs):''}`:'Ainda não marcado'}</div>${r?thumbs(r.fotos):''}</div><div class="ta">${r?'<span class="pill ok">Feito</span>':`<button class="btn sm primary" data-ok="${it.id}" type="button">Feito</button><button class="btn sm" data-okp="${it.id}" type="button">+ Obs./foto</button>`}</div></div>`;
+    const d=daily();$('#ro-d').innerHTML=d.map(it=>row(it,doneOn(it.id,dia))).join('')||'<p class="empty">Nenhum item. Adicione em Ajustes.</p>';
+    $('#ro-dc').textContent=`· ${d.filter(i=>doneOn(i.id,dia)).length} de ${d.length}`;
+    const w=weekly();$('#ro-s').innerHTML=w.map(it=>row(it,doneWeek(it.id,wk))).join('')||'<p class="empty">Nenhum item semanal.</p>';
+    $('#ro-sc').textContent=`· semana de ${weekLbl(wk)}`;
+    $('#ro-grid').innerHTML=rotinaGrid(14);
+    const mark=async(it,obs,f)=>{await addReg('rotina',{itemId:it.id,item:it.nome,freq:it.freq,obs:obs||''},f,null,dia)};
+    $$('[data-ok]').forEach(b=>b.onclick=async()=>{if(!canSave())return;b.disabled=true;try{await mark(CFG.rotina.find(x=>x.id===b.dataset.ok));toast('Marcado por '+WHO()+'.')}catch(e){b.disabled=false;toast('Não foi possível salvar ('+(e.code||'erro')+').',true)}});
+    $$('[data-okp]').forEach(b=>b.onclick=()=>{const it=CFG.rotina.find(x=>x.id===b.dataset.okp);openModal(it.nome,[{k:'obs',l:'Observação',t:'textarea',ph:'Ex.: freezer 2 a -15 °C, ajustado e remedido'}],async(v,f)=>{await mark(it,v.obs,f)},{btn:'Marcar como feito',intro:`Dia ${fD(dia)}`})});
+  }};
+function rotinaGrid(n,dense){const t=TODAY(),days=[];for(let i=n-1;i>=0;i--)days.push(addDays(t,-i));
+  const its=CFG.rotina;
+  return `<table class="grid"><thead><tr><th>Item</th>${days.map(d=>`<th class="c">${DOW[pk(d).getDay()]}<br>${fDs(d)}</th>`).join('')}</tr></thead><tbody>${its.map(it=>`<tr><td class="nm">${esc(it.nome)}${it.freq==='semanal'?' <small>(semanal)</small>':''}</td>${days.map(d=>{const r=it.freq==='semanal'?REGS.find(x=>x.tipo==='rotina'&&x.itemId===it.id&&x.dia===d):doneOn(it.id,d);return r?`<td class="c okc" title="${esc(r.por)} · ${fDT(r.at)}">✓${dense?'':`<br><small>${esc(first(r.por))}</small>`}</td>`:`<td class="c mis">${it.freq==='semanal'?'':'·'}</td>`}).join('')}</tr>`).join('')}</tbody></table>`}
 
-/* higienização */
-VIEWS.higienizacao={tab:'Higienização',title:'Higienização',sub:'Cada tarefa registrada guarda quem fez e quando. As tarefas diárias zeram a cada dia; as semanais e mensais avisam quando atrasam.',
-  html:()=>`<section class="card"><h3>Registrar várias tarefas diárias de uma vez</h3><div id="hl-wrap"></div></section>
-  <section class="card"><h3>Diárias</h3><div id="hg-diaria"></div></section>
-  <section class="card"><h3>Semanais</h3><div id="hg-semanal"></div></section>
-  <section class="card"><h3>Mensais</h3><div id="hg-mensal"></div></section>
-  <section class="card"><h3>Histórico (8 dias)</h3><div id="hg-hist"></div></section>`,
-  bind(){this.drawLote()},
-  drawLote(){const pend=CFG.hig.filter(t=>t.freq==='diaria'&&!higStatus(t).done);
-    if(!pend.length){$('#hl-wrap').innerHTML='<p class="allok">Todas as tarefas diárias de hoje já foram registradas.</p>';return}
-    const fl=[{k:'tarefas',l:'Marque o que foi feito',t:'checks',o:pend.map(t=>`${t.area} · ${t.tarefa}`)},{k:'obs',l:'Observações',t:'textarea'}];
-    $('#hl-wrap').innerHTML=formHTML('fhl',fl,'Registrar tarefas marcadas');
-    bindForm('fhl',fl,async(v,f)=>{if(!v.tarefas.length){toast('Marque pelo menos uma tarefa.',true);return false}
-      const ids=f.length?await upFotos(f,'higiene'):[];const at=new Date().toISOString(),st={};
-      for(const lbl of v.tarefas){const t=pend.find(x=>`${x.area} · ${x.tarefa}`===lbl);await addReg('higiene',{taskId:t.id,tarefa:t.tarefa,area:t.area,freq:t.freq,obs:v.obs},null,ids);st[t.id]={at,por:WHO()}}
-      await FS.setDoc(FS.doc(db,'status','higiene'),st,{merge:true});setTimeout(()=>this.drawLote(),300)})},
-  refresh(){['diaria','semanal','mensal'].forEach(fq=>{const el=$('#hg-'+fq);const ts=CFG.hig.filter(t=>t.freq===fq);
-    el.innerHTML=ts.length?ts.map(t=>{const s=higStatus(t);const p=s.done?(fq==='diaria'?'<span class="pill ok">Feita hoje</span>':'<span class="pill ok">Em dia</span>'):(fq==='diaria'?'<span class="pill warn">Pendente</span>':'<span class="pill bad">Atrasada</span>');
-      return `<div class="task"><div><div class="tt">${esc(t.tarefa)}</div><div class="tm">${esc(t.area)}${s.last?` · última: ${esc(s.last.por)} em ${fDT(s.last.at)}`:' · nunca registrada'}</div></div><div class="ta">${p}<button class="btn sm" data-hig="${t.id}" type="button">Registrar</button></div></div>`}).join(''):'<p class="empty">Nenhuma tarefa nesta frequência. Adicione em Ajustes.</p>'});
-    $('#hg-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='higiene'));
-    $$('[data-hig]').forEach(b=>b.onclick=()=>{const t=CFG.hig.find(x=>x.id===b.dataset.hig);
-      openModal(t.tarefa,[{k:'obs',l:'Observações',t:'textarea',ph:'Produto usado, o que foi encontrado…'}],async(v,f)=>{await addReg('higiene',{taskId:t.id,tarefa:t.tarefa,area:t.area,freq:t.freq,obs:v.obs},f);await FS.setDoc(FS.doc(db,'status','higiene'),{[t.id]:{at:new Date().toISOString(),por:WHO()}},{merge:true});setTimeout(()=>CUR==='higienizacao'&&this.drawLote(),300)},'Registrar higienização')})}};
-
-/* recebimento */
-const CONF_REC=['Embalagem íntegra, sem amassados ou furos','Rótulo completo (produto, lote, validade, SIF/registro)','Características normais (cor, odor, textura)','Veículo do fornecedor limpo e refrigerado quando necessário','Entregador com uniforme adequado'];
-const fRec=()=>[
-  {k:'fornecedor',l:'Fornecedor',req:true},{k:'produto',l:'Produto',req:true},{k:'nf',l:'Nota fiscal'},
-  {k:'categoria',l:'Tipo',t:'select',o:['Congelado','Resfriado','Seco / ambiente','Hortifrúti']},
-  {k:'temp',l:'Temperatura no recebimento (°C)',t:'number',help:''},{k:'validade',l:'Validade',t:'date'},
-  {k:'conf',l:'Conferência (desmarque o que estiver fora do padrão)',t:'checks',o:CONF_REC,all:true},
-  {k:'decisao',l:'Decisão',t:'radio',o:['Aceito','Aceito com ressalva','Recusado'],def:'Aceito',full:true},
-  {k:'acao',l:'Observação / ação tomada',t:'textarea',ph:'Ex.: devolvido ao fornecedor; comunicado ao comprador'}];
-VIEWS.recebimento={tab:'Recebimento',title:'Recebimento de mercadorias',sub:'Confira cada entrega antes de guardar. Registros fora do padrão ficam marcados como não conformes.',
-  html:()=>`<section class="card"><h3>Registrar entrega</h3><p class="ref" id="r-ref"></p>${formHTML('frc',fRec(),'Registrar recebimento')}</section><section class="card"><h3>Histórico (8 dias)</h3><div id="r-hist"></div></section>`,
-  bind(){$('#r-ref').textContent=`Referências configuradas: congelados até ${CFG.lim.recCong} °C; resfriados até ${CFG.lim.recRes} °C. Ajuste em Ajustes conforme o Manual de Boas Práticas.`;
-    bindForm('frc',fRec(),async(v,f)=>{const falhas=CONF_REC.filter(x=>!v.conf.includes(x));
-      if(v.temp!==''){if(v.categoria==='Congelado'&&v.temp>CFG.lim.recCong)falhas.push(`temperatura acima de ${CFG.lim.recCong} °C`);if(v.categoria==='Resfriado'&&v.temp>CFG.lim.recRes)falhas.push(`temperatura acima de ${CFG.lim.recRes} °C`)}
-      if(v.validade&&v.validade<TODAY())falhas.push('produto vencido');
-      if(falhas.length&&!v.acao){toast('Há itens fora do padrão: descreva a ação tomada.',true);return false}
-      await addReg('receb',{fornecedor:v.fornecedor,produto:v.produto,nf:v.nf,categoria:v.categoria,temp:v.temp,validade:v.validade,decisao:v.decisao,falhas,conforme:!falhas.length,acao:v.acao},f)})},
-  refresh(){$('#r-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='receb'))}};
-
-/* equipe */
-const CONF_EQ=['Uniforme limpo e completo','Touca cobrindo todo o cabelo','Sem adornos (anel, aliança, brinco, relógio, pulseira, piercing)','Barba feita / sem bigode','Unhas curtas, limpas e sem esmalte','Sem sintomas (febre, diarreia, vômito, feridas nas mãos)','Bota ou calçado fechado limpo, guardado no lugar certo','Lavagem correta das mãos observada','Roupas e objetos pessoais guardados nos armários (fora do sanitário)'];
-const fEq=()=>[
-  {k:'conf',l:'Desmarque o que estiver fora do padrão',t:'checks',o:CONF_EQ,all:true},
-  {k:'presentes',l:'Funcionários presentes',t:'number'},{k:'funcionarios',l:'Quem estava fora do padrão',ph:'Nomes'},
-  {k:'acao',l:'Orientação dada / ação corretiva',t:'textarea',ph:'Ex.: orientado a fazer a barba; assinou termo de ciência'}];
-VIEWS.equipe={tab:'Equipe',title:'Higiene e conduta da equipe',sub:'Checagem diária no início do turno. Quando houver orientação, registre e, se possível, anexe foto do termo de ciência assinado.',
-  html:()=>`<section class="card"><h3>Checagem de hoje</h3><div id="e-hoje"></div>${formHTML('feq',fEq(),'Registrar checagem')}</section><section class="card"><h3>Histórico (8 dias)</h3><div id="e-hist"></div></section>`,
-  bind(){bindForm('feq',fEq(),async(v,f)=>{const nc=CONF_EQ.filter(x=>!v.conf.includes(x));if(nc.length&&!v.acao){toast('Há itens fora do padrão: descreva a orientação dada.',true);return false}
-    await addReg('equipe',{nc,conforme:!nc.length,presentes:v.presentes,funcionarios:v.funcionarios,acao:v.acao},f)})},
-  refresh(){const t=todayRegs('equipe');$('#e-hoje').innerHTML=t.length?`<p class="allok">Checagem feita hoje por ${esc(t[0].por)} às ${fT(t[0].at)}.</p>`:'<p class="empty">Ainda não feita hoje.</p>';$('#e-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='equipe'))}};
+/* planilhas */
+let PLWK=null;
+VIEWS.planilhas={tab:'Planilhas',title:'Planilhas da semana',sub:'Toda sexta-feira, fotografe cada planilha de papel da semana e envie no lugar certo. Fotografe de cima, com boa luz e a folha inteira aparecendo.',
+  html:()=>`<section class="card"><div class="field" style="max-width:340px"><label class="lbl" for="pl-wk">Semana</label><select id="pl-wk"></select></div></section><div id="pl-list" style="display:flex;flex-direction:column;gap:12px"></div>`,
+  bind(){const wk=weekKey(TODAY());PLWK=PLWK||wk;const o=[];for(let i=0;i<10;i++){const w=addDays(wk,-7*i);o.push(`<option value="${w}"${w===PLWK?' selected':''}>${i===0?'Esta semana':i===1?'Semana passada':'Semana'} · ${weekLbl(w)}</option>`)}$('#pl-wk').innerHTML=o.join('');$('#pl-wk').onchange=e=>{PLWK=e.target.value;this.refresh()}},
+  refresh(){const wk=PLWK||weekKey(TODAY());
+    $('#pl-list').innerHTML=CFG.planilhas.map(p=>{const L=planOf(p.id,wk);return `<section class="card"><div class="doc-h"><h3>${esc(p.nome)}</h3>${L.length?`<span class="pill ok">Enviada</span>`:`<span class="pill ${wk<weekKey(TODAY())?'bad':'warn'}">Pendente</span>`}</div>
+      ${L.map(r=>`<div class="reg-m">${plural(r.fotos.length,'foto','fotos')} · ${esc(r.por)} · ${fDT(r.at)}${r.obs?' · '+esc(r.obs):''}</div>${thumbs(r.fotos)}`).join('')}
+      <div class="rowbtns"><button class="btn sm ${L.length?'':'primary'}" data-pl="${p.id}" type="button">${L.length?'Enviar mais fotos':'Enviar fotos'}</button></div></section>`}).join('');
+    $$('[data-pl]').forEach(b=>b.onclick=()=>{const p=CFG.planilhas.find(x=>x.id===b.dataset.pl);
+      openModal(p.nome,[{k:'obs',l:'Observação',t:'textarea',ph:'Ex.: folhas de segunda a sexta; quinta com ação corretiva anotada'}],async(v,f)=>{if(!f.length){toast('Adicione pelo menos uma foto da planilha.',true);return false}await addReg('planilha',{planId:p.id,planilha:p.nome,semana:wk,obs:v.obs},f)},{btn:'Enviar',hi:true,flbl:'Fotos da planilha *',intro:`Semana de ${weekLbl(wk)}`})})}};
 
 /* treinamentos */
 const fTr=()=>[
   {k:'tema',l:'Tema',req:true,list:['Boas práticas de manipulação de alimentos','Higiene pessoal e conduta','Higienização de instalações, equipamentos e utensílios (POP)','Controle de temperatura','Recebimento e armazenamento','Controle integrado de pragas','Coleta e guarda de amostras','Rotulagem e etiquetagem de alimentos']},
   {k:'data',l:'Data',t:'date',def:TODAY},{k:'ch',l:'Carga horária (h)',t:'number'},{k:'ministrante',l:'Ministrante'},
-  {k:'participantes',l:'Participantes',t:'textarea',req:true,ph:'Nomes, um por linha ou separados por vírgula'},
-  {k:'obs',l:'Observações',t:'textarea',ph:'Anexe foto da lista de presença assinada'}];
+  {k:'participantes',l:'Participantes',t:'textarea',req:true,ph:'Nomes, separados por vírgula'},
+  {k:'obs',l:'Observações',t:'textarea',ph:'Anexe foto da lista de presença assinada e dos certificados'}];
 VIEWS.treinamentos={tab:'Treinamentos',title:'Treinamentos',sub:'Comprova a capacitação exigida no relatório. Anexe foto da lista de presença e dos certificados.',
-  html:()=>`<section class="card"><h3>Registrar treinamento</h3>${formHTML('ftr',fTr(),'Registrar treinamento')}</section><section class="card"><h3>Treinamentos registrados</h3><div id="tr-hist"></div></section>`,
+  html:()=>`<section class="card"><h3>Registrar treinamento</h3>${formHTML('ftr',fTr(),'Registrar treinamento')}</section><section class="card"><h3>Treinamentos registrados</h3><div id="tr-hist" class="regs"></div></section>`,
   bind(){bindForm('ftr',fTr(),async(v,f)=>{await addReg('trein',v,f)})},
-  refresh(){$('#tr-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='trein'),{empty:'Nenhum treinamento nos últimos 8 dias. Os anteriores aparecem em Exportar.'})}};
+  refresh(){$('#tr-hist').innerHTML=TREIN.length?TREIN.map(r=>regRow(r)).join(''):'<p class="empty">Nenhum treinamento registrado.</p>'}};
 
 /* ocorrências */
 const fOc=()=>[
-  {k:'categoria',l:'Tipo',t:'select',o:['Pragas / vetores','Equipamento com defeito','Estrutura / manutenção','Falta de água ou energia','Fornecedor / produto','Alimento descartado','Conduta de funcionário','Visita da vigilância sanitária','Outros']},
+  {k:'categoria',l:'Tipo',t:'select',o:['Temperatura fora do limite','Pragas / vetores','Equipamento com defeito','Estrutura / manutenção','Falta de água ou energia','Fornecedor / produto recusado','Alimento descartado','Conduta de funcionário','Visita da vigilância sanitária','Outros']},
   {k:'descricao',l:'O que aconteceu',t:'textarea',req:true},{k:'acao',l:'Ação tomada',t:'textarea'}];
-VIEWS.ocorrencias={tab:'Ocorrências',title:'Ocorrências',sub:'Diário de tudo que fugiu da rotina: problema encontrado, o que foi feito e foto.',
-  html:()=>`<section class="card"><h3>Registrar ocorrência</h3>${formHTML('foc',fOc(),'Registrar ocorrência')}</section><section class="card"><h3>Histórico (8 dias)</h3><div id="oc-hist"></div></section>`,
+VIEWS.ocorrencias={tab:'Ocorrências',title:'Ocorrências',sub:'Tudo que fugiu da rotina: problema encontrado, o que foi feito e foto.',
+  html:()=>`<section class="card"><h3>Registrar ocorrência</h3>${formHTML('foc',fOc(),'Registrar ocorrência')}</section><section class="card"><h3>Últimos 35 dias</h3><div id="oc-hist" class="regs"></div></section>`,
   bind(){bindForm('foc',fOc(),async(v,f)=>{await addReg('ocorr',v,f)})},
-  refresh(){$('#oc-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='ocorr'))}};
+  refresh(){const L=REGS.filter(r=>r.tipo==='ocorr');$('#oc-hist').innerHTML=L.length?L.map(r=>regRow(r)).join(''):'<p class="empty">Nenhuma ocorrência registrada.</p>'}};
 
 /* relatório revisa */
 let RV={owner:'rt',filt:'open'};
-VIEWS.revisa={tab:'Relatório Revisa',title:'Relatório da Revisa',sub:'Inspeção de 06/11/2026 · prazo de 30 dias até 09/12/2026. Toque no círculo para mudar o status e anexe fotos de antes e depois como comprovação.',
+VIEWS.revisa={tab:'Relatório Revisa',title:'Relatório da Revisa',sub:'Inspeção de 06/11/2026 · prazo de 30 dias até 09/12/2026. Toque no círculo para mudar o status e anexe fotos de antes e depois.',
   html:()=>`<div class="chips" id="rv-own"></div><div class="chips" id="rv-f"></div><div id="rv-list" style="display:flex;flex-direction:column;gap:12px"></div>`,
   bind(){
     const own=[['','Todos'],...Object.entries(OWN).map(([k,o])=>[k,o.n])];
@@ -656,81 +572,101 @@ async function saveItem(id,ch,o){const p=ITENS[id]||{};const at=new Date().toISO
   try{await FS.setDoc(FS.doc(db,'itens',id),d);toast(o+'.')}catch(e){toast('Não foi possível salvar ('+(e.code||'erro')+').',true)}}
 
 /* prazos */
-VIEWS.prazos={tab:'Prazos',title:'Prazos e controles',sub:'Dedetização, filtro, caixa d\'água, laudos e documentos com vencimento. Atualize sempre que o serviço for feito e anexe foto do certificado ou comprovante.',
+VIEWS.prazos={tab:'Prazos',title:'Prazos e controles',sub:'Dedetização, filtro, caixa d\'água, laudos e documentos com vencimento. Atualize sempre que o serviço for feito e anexe foto do certificado.',
   html:()=>`<section class="tiles" id="pz-tiles"></section><div id="pz-list" style="display:flex;flex-direction:column;gap:12px"></div>`,
   refresh(){
     const S=PRAZOS.map(prazoStatus),c=k=>S.filter(s=>s.k===k).length;
-    $('#pz-tiles').innerHTML=`<div class="tile bad"><b>${c('bad')}</b><span>Vencidos</span></div><div class="tile warn"><b>${c('warn')}</b><span>Vencem em até 30 dias</span></div><div class="tile ${c('none')?'warn':'ok'}"><b>${c('none')}</b><span>Sem registro</span></div>`;
-    const groups=[...new Set(PRAZOS.map(p=>p.g))];
-    $('#pz-list').innerHTML=groups.map(g=>`<section class="card"><h3>${esc(g)}</h3>${PRAZOS.filter(p=>p.g===g).map(p=>{const d=DOCS[p.id]||{},s=prazoStatus(p);
-      return `<div class="doc"><div class="doc-h"><div><strong>${esc(p.nome)}</strong><span class="meta">Periodicidade: ${p.m} meses${p.o?' · '+esc(p.o):''}</span></div><span class="pill ${s.k}">${esc(s.t)}</span></div>
+    $('#pz-tiles').innerHTML=`<div class="tile ${c('bad')?'bad':'ok'}"><b>${c('bad')}</b><span>Vencidos</span></div><div class="tile ${c('warn')?'warn':'ok'}"><b>${c('warn')}</b><span>Vencem em até 30 dias</span></div><div class="tile ${c('none')?'warn':'ok'}"><b>${c('none')}</b><span>Sem registro</span></div>`;
+    $('#pz-list').innerHTML=[...new Set(PRAZOS.map(p=>p.g))].map(g=>`<section class="card"><h3>${esc(g)}</h3>${PRAZOS.filter(p=>p.g===g).map(p=>{const d=DOCS[p.id]||{},s=prazoStatus(p);
+      return `<div class="doc"><div class="doc-h"><div><strong>${esc(p.nome)}</strong><span class="meta">A cada ${p.m} meses${p.o?' · '+esc(p.o):''}</span></div><span class="pill ${s.k}">${esc(s.t)}</span></div>
       ${d.realizado?`<div class="meta">Último: ${fD(d.realizado)} · vence ${fD(d.validade)}${d.empresa?' · '+esc(d.empresa):''} · registrado por ${esc(d.por)}</div>`:''}${d.obs?`<div class="reg-a">${esc(d.obs)}</div>`:''}${thumbs(d.fotos)}
       <div class="rowbtns"><button class="btn sm primary" data-pz="${p.id}" type="button">Registrar realização</button></div>
       ${(d.hist||[]).length?`<details><summary>Histórico</summary><ol class="hist">${d.hist.slice().reverse().map(x=>`<li>${fDT(x.at)} · ${esc(x.por)} · ${esc(x.o)}</li>`).join('')}</ol></details>`:''}</div>`}).join('')}</section>`).join('');
     $$('[data-pz]').forEach(b=>b.onclick=()=>{const p=PRAZOS.find(x=>x.id===b.dataset.pz),d=DOCS[p.id]||{};
-      openModal(p.nome,[{k:'realizado',l:'Data em que foi feito',t:'date',def:TODAY,req:true},{k:'validade',l:'Vence em',t:'date',def:()=>addMonths(TODAY(),p.m),req:true,help:`Sugestão: ${p.m} meses após a realização. Use a validade do certificado, se houver.`},{k:'empresa',l:'Empresa / responsável',def:d.empresa||''},{k:'obs',l:'Observações',t:'textarea',ph:'Nº do certificado, produtos usados, valor…'}],
+      openModal(p.nome,[{k:'realizado',l:'Data em que foi feito',t:'date',def:TODAY,req:true},{k:'validade',l:'Vence em',t:'date',def:()=>addMonths(TODAY(),p.m),req:true,help:`Use a validade que está no certificado. Sugestão: ${p.m} meses após a realização.`},{k:'empresa',l:'Empresa / responsável',def:d.empresa||''},{k:'obs',l:'Observações',t:'textarea',ph:'Nº do certificado, produtos usados…'}],
         async(v,f)=>{if(v.validade<v.realizado){toast('A data de vencimento é anterior à realização.',true);return false}const ids=f.length?await upFotos(f,'prazo-'+p.id):[];const at=new Date().toISOString();
-          await FS.setDoc(FS.doc(db,'docs',p.id),{realizado:v.realizado,validade:v.validade,empresa:v.empresa,obs:v.obs,at,por:WHO(),fotos:[...(d.fotos||[]),...ids].slice(-20),hist:[...(d.hist||[]),{o:`Realizado em ${fD(v.realizado)}, vence em ${fD(v.validade)}${ids.length?' · '+plural(ids.length,'foto','fotos'):''}`,por:WHO(),at}].slice(-30)})},'Salvar',
-        fid=>{$('#'+fid+'-realizado').addEventListener('change',e=>{if(e.target.value)$('#'+fid+'-validade').value=addMonths(e.target.value,p.m)})})})}};
+          await FS.setDoc(FS.doc(db,'docs',p.id),{realizado:v.realizado,validade:v.validade,empresa:v.empresa,obs:v.obs,at,por:WHO(),fotos:[...(d.fotos||[]),...ids].slice(-20),hist:[...(d.hist||[]),{o:`Realizado em ${fD(v.realizado)}, vence em ${fD(v.validade)}${ids.length?' · '+plural(ids.length,'foto','fotos'):''}`,por:WHO(),at}].slice(-30)})},
+        {hi:true,flbl:'Foto do certificado / comprovante',after:fid=>{$('#'+fid+'-realizado').addEventListener('change',e=>{if(e.target.value)$('#'+fid+'-validade').value=addMonths(e.target.value,p.m)})}})})}};
+
+/* fiscalização */
+VIEWS.fiscalizacao={tab:'Fiscalização',title:'Registros para a fiscalização',sub:'Página de consulta. Reúne certificados, planilhas, rotina, treinamentos e as adequações do relatório. Toque em qualquer foto para ampliar.',
+  html:()=>`<section class="card"><h3>Estabelecimento</h3><div id="fi-id"></div></section>
+  <nav class="chips noprint" aria-label="Seções"><a class="chip" href="#fi-prazos" data-jump>Certificados</a><a class="chip" href="#fi-plan" data-jump>Planilhas</a><a class="chip" href="#fi-rot" data-jump>Rotina</a><a class="chip" href="#fi-tr" data-jump>Treinamentos</a><a class="chip" href="#fi-rv" data-jump>Adequações</a><a class="chip" href="#fi-oc" data-jump>Ocorrências</a></nav>
+  <section class="card" id="fi-prazos"><h3>Certificados e controles com validade</h3><div id="fi-pz"></div></section>
+  <section class="card" id="fi-plan"><h3>Planilhas de controle (fotos semanais)</h3><div id="fi-pl"></div></section>
+  <section class="card" id="fi-rot"><h3>Rotina diária — últimos 30 dias</h3><p class="help">✓ = marcado como feito. Passe o dedo ou o mouse para ver quem marcou.</p><div class="tgrid" id="fi-ro"></div></section>
+  <section class="card" id="fi-tr"><h3>Treinamentos</h3><div id="fi-t" class="regs"></div></section>
+  <section class="card" id="fi-rv"><h3>Adequações do relatório de 06/11/2026</h3><div id="fi-r"></div></section>
+  <section class="card" id="fi-oc"><h3>Ocorrências — últimos 35 dias</h3><div id="fi-o" class="regs"></div></section>`,
+  bind(){$$('[data-jump]').forEach(a=>a.onclick=e=>{e.preventDefault();$(a.getAttribute('href')).scrollIntoView({behavior:'smooth'})})},
+  refresh(){
+    const rt=CFG.rt||{};const al=prazoStatus(PRAZOS.find(p=>p.id==='alvara'));
+    $('#fi-id').innerHTML=`<div class="kv"><span>Razão social</span><b>Fortal Comércio de Alimentos LTDA</b><span>Endereço</span><b>Rua Comandante Poty, 33, loja A, 18 do Forte, Aracaju/SE</b><span>Nutricionista RT</span><b>${rt.nome?esc(rt.nome)+(rt.crn?' · CRN '+esc(rt.crn):''):'—'}</b><span>Alvará Sanitário</span><b><span class="pill ${al.k}">${esc(al.t)}</span></b></div>`;
+    $('#fi-pz').innerHTML=`<div class="tgrid"><table><thead><tr><th>Controle</th><th>Realizado</th><th>Validade</th><th>Situação</th></tr></thead><tbody>${PRAZOS.map(p=>{const d=DOCS[p.id]||{},s=prazoStatus(p);return `<tr><td>${esc(p.nome)}${d.empresa?`<br><small>${esc(d.empresa)}</small>`:''}${thumbs(d.fotos)}</td><td>${fD(d.realizado)}</td><td>${fD(d.validade)}</td><td><span class="pill ${s.k}">${esc(s.t)}</span></td></tr>`}).join('')}</tbody></table></div>`;
+    const wks=[...new Set(PLAN.map(r=>r.semana))].sort().reverse();
+    $('#fi-pl').innerHTML=wks.length?wks.map((w,i)=>`<details class="wk"${i<2?' open':''}><summary>Semana de ${weekLbl(w)} · ${CFG.planilhas.filter(p=>planOf(p.id,w).length).length} de ${CFG.planilhas.length} planilhas</summary>${CFG.planilhas.map(p=>{const L=planOf(p.id,w);return `<div class="doc"><div class="doc-h"><strong>${esc(p.nome)}</strong>${L.length?'':'<span class="pill none">Sem foto</span>'}</div>${L.map(r=>`${thumbs(r.fotos,true)}<div class="reg-m">Enviada por ${esc(r.por)} em ${fDT(r.at)}${r.obs?' · '+esc(r.obs):''}</div>`).join('')}</div>`}).join('')}</details>`).join(''):'<p class="empty">Nenhuma planilha enviada ainda.</p>';
+    $('#fi-ro').innerHTML=rotinaGrid(30,true);
+    $('#fi-t').innerHTML=TREIN.length?TREIN.map(r=>regRow(r,{big:true})).join(''):'<p class="empty">Nenhum treinamento registrado.</p>';
+    const dn=ITEMS.filter(i=>itemSt(i[0])==='concluido').length,an=ITEMS.filter(i=>itemSt(i[0])==='andamento').length;
+    $('#fi-r').innerHTML=`<p class="vs" style="margin:0">${dn} concluídos · ${an} em andamento · ${ITEMS.length-dn-an} pendentes, de ${ITEMS.length} apontamentos.</p><div class="tgrid"><table><thead><tr><th>Área</th><th>Apontamento</th><th>Situação</th><th>Registro</th></tr></thead><tbody>${ITEMS.map(i=>{const r=ITENS[i[0]]||{},s=itemSt(i[0]);return `<tr><td>${esc(i[1])}</td><td>${esc(i[2])}${r.obs?`<br><small>${esc(r.obs)}</small>`:''}${thumbs(r.fotos)}</td><td><span class="pill ${s==='concluido'?'ok':s==='andamento'?'warn':'none'}">${STL[s]}</span></td><td>${r.por?esc(r.por)+'<br><small>'+fDT(r.at)+'</small>':'—'}</td></tr>`}).join('')}</tbody></table></div>`;
+    const oc=REGS.filter(r=>r.tipo==='ocorr');$('#fi-o').innerHTML=oc.length?oc.map(r=>regRow(r)).join(''):'<p class="empty">Nenhuma ocorrência registrada.</p>';
+  }};
 
 /* exportar */
-const SECOES=[['temp','Temperaturas de equipamentos'],['tempalim','Temperaturas de alimentos'],['amostra','Amostras'],['higiene','Higienização'],['receb','Recebimento'],['equipe','Checagem da equipe'],['trein','Treinamentos'],['ocorr','Ocorrências'],['revisa','Relatório da Revisa (situação atual)'],['prazos','Prazos e controles (situação atual)']];
-VIEWS.exportar={tab:'Exportar',title:'Relatório para comprovação',sub:'Gere o relatório de um dia ou de um período, com ou sem fotos, e salve em PDF pelo botão de imprimir.',
+const SECOES=[['rotina','Rotina diária (checklist)'],['planilha','Fotos das planilhas'],['trein','Treinamentos'],['ocorr','Ocorrências'],['revisa','Relatório da Revisa (situação atual)'],['prazos','Prazos e certificados (situação atual)']];
+VIEWS.exportar={tab:'Exportar',title:'Relatório em PDF',sub:'Gere o relatório de um dia, de uma semana ou de um período e salve em PDF pelo botão de imprimir.',
   html:()=>`<section class="card noprint"><div class="fgrid">
     <div class="field"><label class="lbl" for="ex-de">De</label><input type="date" id="ex-de"></div><div class="field"><label class="lbl" for="ex-ate">Até</label><input type="date" id="ex-ate"></div>
     <fieldset class="field full checks" id="ex-sec"><legend class="lbl">Incluir</legend>${SECOES.map(([k,n])=>`<label class="chk"><input type="checkbox" value="${k}" checked><span>${n}</span></label>`).join('')}</fieldset>
     <label class="chk field full"><input type="checkbox" id="ex-fotos" checked><span>Incluir fotos</span></label></div>
     <div class="factions"><button class="btn primary" id="ex-go" type="button">Gerar relatório</button><button class="btn" id="ex-print" type="button" hidden>Imprimir / salvar PDF</button></div></section>
     <div id="ex-out"></div>`,
-  bind(){$('#ex-de').value=TODAY();$('#ex-ate').value=TODAY();$('#ex-print').onclick=()=>window.print();
+  bind(){const t=TODAY();$('#ex-de').value=weekKey(t);$('#ex-ate').value=t;$('#ex-print').onclick=()=>window.print();
     $('#ex-go').onclick=async()=>{if(!online){toast('Sem conexão com o servidor.',true);return}const de=$('#ex-de').value,ate=$('#ex-ate').value;if(!de||!ate||ate<de){toast('Confira as datas.',true);return}
       const sec=$$('#ex-sec input:checked').map(i=>i.value),wf=$('#ex-fotos').checked,b=$('#ex-go');b.disabled=true;b.textContent='Gerando…';$('#ex-print').hidden=true;
       try{const s=await FS.getDocs(FS.query(FS.collection(db,'registros'),FS.where('dia','>=',de),FS.where('dia','<=',ate)));const R=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.at.localeCompare(b.at));
-        $('#ex-out').innerHTML=buildReport(R,de,ate,sec,wf);await hydrate($('#ex-out'));$('#ex-print').hidden=false;$('#ex-out').scrollIntoView({behavior:'smooth'})}
+        $('#ex-out').innerHTML=buildReport(R,de,ate,sec,wf);await hydrate($('#ex-out'),true);$('#ex-print').hidden=false;$('#ex-out').scrollIntoView({behavior:'smooth'})}
       catch(e){console.error(e);toast('Não foi possível gerar ('+(e.code||'erro')+').',true)}finally{b.disabled=false;b.textContent='Gerar relatório'}}}};
 function buildReport(R,de,ate,sec,wf){
-  const per=de===ate?fD(de):`${fD(de)} a ${fD(ate)}`;
+  const per=de===ate?fD(de):`${fD(de)} a ${fD(ate)}`,rt=CFG.rt||{};
   let h=`<article class="report"><div><h2>Fortal Comércio de Alimentos LTDA — Controle sanitário</h2><div>Rua Comandante Poty, 33, loja A, 18 do Forte, Aracaju/SE · Período: ${per} · Gerado em ${fDT(new Date().toISOString())}${WHO()?' por '+esc(WHO()):''}</div></div>`;
   const tb=(cols,rows)=>`<div class="tgrid"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
-  SECOES.forEach(([k,n])=>{if(!sec.includes(k))return;
-    if(k==='revisa'){const rows=ITEMS.map(i=>{const r=ITENS[i[0]]||{};return `<tr><td>${esc(i[1])}</td><td>${esc(i[2])}</td><td>${OWN[i[4]].n}</td><td>${STL[itemSt(i[0])]}</td><td>${r.por?esc(r.por)+'<br>'+fDT(r.at):'—'}</td><td>${esc(r.obs||'')}${wf?thumbs(r.fotos):''}</td></tr>`});
-      const dn=ITEMS.filter(i=>itemSt(i[0])==='concluido').length;h+=`<h3>${n} — ${dn} de ${ITEMS.length} concluídos</h3>`+tb(['Área','Constatação','Responsável','Status','Último registro','Anotação'],rows);return}
-    if(k==='prazos'){h+=`<h3>${n}</h3>`+tb(['Controle','Situação','Realizado','Vence','Registrado por','Obs.'],PRAZOS.map(p=>{const d=DOCS[p.id]||{};return `<tr><td>${esc(p.nome)}</td><td>${prazoStatus(p).t}</td><td>${fD(d.realizado)}</td><td>${fD(d.validade)}</td><td>${esc(d.por||'—')}</td><td>${esc([d.empresa,d.obs].filter(Boolean).join(' · '))}${wf?thumbs(d.fotos):''}</td></tr>`}));return}
-    const L=R.filter(r=>r.tipo===k);const nc=L.filter(r=>desc(r).ok===false).length;
-    h+=`<h3>${n} — ${plural(L.length,'registro','registros')}${nc?` · ${nc} não conforme${nc>1?'s':''}`:''}</h3>`;
-    if(!L.length){h+='<p>Nenhum registro no período.</p>';return}
-    h+=tb(['Data e hora','Registro','Detalhes','Situação','Responsável'],L.map(r=>{const x=desc(r);return `<tr><td>${fDT(r.at)}</td><td>${esc(x.t)}</td><td>${esc(x.d)}${r.acao?'<br><b>Ação:</b> '+esc(r.acao):''}${r.obs?'<br>'+esc(r.obs):''}${wf?thumbs(r.fotos):''}</td><td>${x.ok===true?'Conforme':x.ok===false?'<b>Não conforme</b>':'—'}</td><td>${esc(r.por)}</td></tr>`}))});
-  h+=`<div class="sign"><div>Nutricionista Responsável Técnica<br>CRN: __________</div><div>Responsável legal / Gestão</div></div></article>`;return h}
+  if(sec.includes('rotina')){const days=[];for(let d=de;d<=ate;d=addDays(d,1))days.push(d);
+    h+=`<h3>Rotina diária — checklist</h3>`+tb(['Dia',...CFG.rotina.map(i=>esc(i.nome))],days.map(d=>`<tr><td>${DOW[pk(d).getDay()]} ${fD(d)}</td>${CFG.rotina.map(it=>{const r=R.find(x=>x.tipo==='rotina'&&x.itemId===it.id&&x.dia===d);return `<td>${r?'✓ '+esc(first(r.por))+'<br><small>'+fT(r.at)+(isoDay(r.at)!==d?' '+fDs(isoDay(r.at)):'')+'</small>':''}</td>`}).join('')}</tr>`));
+    const ob=R.filter(r=>r.tipo==='rotina'&&(r.obs||(r.fotos||[]).length));if(ob.length)h+=tb(['Data','Item','Observação','Responsável'],ob.map(r=>`<tr><td>${fD(r.dia)}</td><td>${esc(r.item)}</td><td>${esc(r.obs)}${wf?thumbs(r.fotos):''}</td><td>${esc(r.por)}</td></tr>`))}
+  if(sec.includes('planilha')){const wks=[...new Set(PLAN.filter(r=>r.semana>=weekKey(de)&&r.semana<=ate).map(r=>r.semana))].sort();
+    h+=`<h3>Planilhas de controle</h3>`+(wks.length?wks.map(w=>`<h4>Semana de ${weekLbl(w)}</h4>`+tb(['Planilha','Enviada por','Fotos'],CFG.planilhas.map(p=>{const L=planOf(p.id,w);return `<tr><td>${esc(p.nome)}</td><td>${L.length?L.map(r=>esc(r.por)+'<br><small>'+fDT(r.at)+'</small>').join('<br>'):'<b>Não enviada</b>'}</td><td>${wf?L.map(r=>thumbs(r.fotos,true)).join(''):L.reduce((a,r)=>a+r.fotos.length,0)+' foto(s)'}</td></tr>`}))).join(''):'<p>Nenhuma planilha enviada no período.</p>')}
+  [['trein','Treinamentos'],['ocorr','Ocorrências']].forEach(([k,n])=>{if(!sec.includes(k))return;const L=R.filter(r=>r.tipo===k);h+=`<h3>${n} — ${plural(L.length,'registro','registros')}</h3>`;
+    h+=L.length?tb(['Data','Registro','Detalhes','Responsável'],L.map(r=>{const x=desc(r);return `<tr><td>${fDT(r.at)}</td><td>${esc(x.t)}</td><td>${esc(x.d)}${r.acao?'<br><b>Ação:</b> '+esc(r.acao):''}${r.obs?'<br>'+esc(r.obs):''}${wf?thumbs(r.fotos):''}</td><td>${esc(r.por)}</td></tr>`})):'<p>Nenhum registro no período.</p>'});
+  if(sec.includes('revisa')){const dn=ITEMS.filter(i=>itemSt(i[0])==='concluido').length;h+=`<h3>Relatório da Revisa — ${dn} de ${ITEMS.length} concluídos</h3>`+tb(['Área','Constatação','Responsável','Status','Último registro','Anotação'],ITEMS.map(i=>{const r=ITENS[i[0]]||{};return `<tr><td>${esc(i[1])}</td><td>${esc(i[2])}</td><td>${OWN[i[4]].n}</td><td>${STL[itemSt(i[0])]}</td><td>${r.por?esc(r.por)+'<br>'+fDT(r.at):'—'}</td><td>${esc(r.obs||'')}${wf?thumbs(r.fotos):''}</td></tr>`}))}
+  if(sec.includes('prazos'))h+=`<h3>Prazos e certificados</h3>`+tb(['Controle','Situação','Realizado','Validade','Empresa / obs.'],PRAZOS.map(p=>{const d=DOCS[p.id]||{};return `<tr><td>${esc(p.nome)}</td><td>${prazoStatus(p).t}</td><td>${fD(d.realizado)}</td><td>${fD(d.validade)}</td><td>${esc([d.empresa,d.obs].filter(Boolean).join(' · '))}${wf?thumbs(d.fotos):''}</td></tr>`}));
+  h+=`<div class="sign"><div>${rt.nome?esc(rt.nome):'Nutricionista Responsável Técnica'}<br>Nutricionista RT · CRN ${rt.crn?esc(rt.crn):'__________'}</div><div>Responsável legal / Gestão</div></div></article>`;return h}
 
 /* ajustes */
 let WC=null;
-VIEWS.ajustes={tab:'Ajustes',title:'Ajustes',sub:'Equipamentos, refeições, limites de temperatura e tarefas de higienização. As mudanças valem para todos que usam o sistema.',
-  html:()=>`<section class="card"><h3>Equipamentos de frio e quente</h3><div id="aj-eq"></div><div class="rowbtns"><button class="btn sm" id="aj-addeq" type="button">+ Equipamento</button></div></section>
-  <section class="card"><h3>Refeições servidas</h3><div class="field"><label class="lbl" for="aj-ref">Uma por linha (cada uma pede uma coleta de amostra por dia)</label><textarea id="aj-ref" rows="3"></textarea></div></section>
-  <section class="card"><h3>Limites</h3><div class="fgrid" id="aj-lim"></div></section>
-  <section class="card"><h3>Tarefas de higienização</h3><div id="aj-hig"></div><div class="rowbtns"><button class="btn sm" id="aj-addhig" type="button">+ Tarefa</button></div></section>
+VIEWS.ajustes={tab:'Ajustes',title:'Ajustes',sub:'Nutricionista responsável, itens da rotina e planilhas. As mudanças valem para todos que usam o sistema.',
+  html:()=>`<section class="card"><h3>Nutricionista responsável técnica</h3><div class="fgrid"><div class="field"><label class="lbl" for="aj-rtn">Nome</label><input id="aj-rtn"></div><div class="field"><label class="lbl" for="aj-crn">CRN</label><input id="aj-crn"></div></div></section>
+  <section class="card"><h3>Itens da rotina</h3><div id="aj-ro"></div><div class="rowbtns"><button class="btn sm" id="aj-addro" type="button">+ Item</button></div></section>
+  <section class="card"><h3>Planilhas de papel (fotos de sexta-feira)</h3><div id="aj-pl"></div><div class="rowbtns"><button class="btn sm" id="aj-addpl" type="button">+ Planilha</button></div></section>
   <div class="factions"><button class="btn primary" id="aj-save" type="button">Salvar ajustes</button></div>`,
-  bind(){WC=JSON.parse(JSON.stringify(CFG));const self=this;
-    const drawEq=()=>{$('#aj-eq').innerHTML=WC.equip.map((e,i)=>`<div class="fgrid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;align-items:end;margin-bottom:6px"><div class="field"><label class="lbl" for="aje-n${i}">Nome</label><input id="aje-n${i}" value="${esc(e.nome)}"></div><div class="field"><label class="lbl" for="aje-t${i}">Tipo</label><select id="aje-t${i}">${Object.entries(TIPOEQ).map(([k,n])=>`<option value="${k}"${k===e.tipo?' selected':''}>${n}</option>`).join('')}</select></div><button class="btn sm" data-rmeq="${i}" type="button">Remover</button></div>`).join('');
-      WC.equip.forEach((e,i)=>{$('#aje-n'+i).oninput=x=>e.nome=x.target.value;$('#aje-t'+i).onchange=x=>e.tipo=x.target.value});$$('[data-rmeq]').forEach(b=>b.onclick=()=>{WC.equip.splice(+b.dataset.rmeq,1);drawEq()})};
-    const drawHig=()=>{$('#aj-hig').innerHTML=WC.hig.map((t,i)=>`<div class="fgrid" style="grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr) auto;align-items:end;margin-bottom:6px"><div class="field"><label class="lbl" for="ajh-a${i}">Área</label><input id="ajh-a${i}" value="${esc(t.area)}"></div><div class="field"><label class="lbl" for="ajh-t${i}">Tarefa</label><input id="ajh-t${i}" value="${esc(t.tarefa)}"></div><div class="field"><label class="lbl" for="ajh-f${i}">Frequência</label><select id="ajh-f${i}">${Object.entries(FREQ).map(([k,n])=>`<option value="${k}"${k===t.freq?' selected':''}>${n}</option>`).join('')}</select></div><button class="btn sm" data-rmh="${i}" type="button">Remover</button></div>`).join('');
-      WC.hig.forEach((t,i)=>{$('#ajh-a'+i).oninput=x=>t.area=x.target.value;$('#ajh-t'+i).oninput=x=>t.tarefa=x.target.value;$('#ajh-f'+i).onchange=x=>t.freq=x.target.value});$$('[data-rmh]').forEach(b=>b.onclick=()=>{WC.hig.splice(+b.dataset.rmh,1);drawHig()})};
-    drawEq();drawHig();$('#aj-ref').value=WC.refeicoes.join('\n');
-    const LIM=[['congelado','Congelados — máximo (°C)'],['resfriado','Resfriados — máximo (°C)'],['quente','Quente — mínimo (°C)'],['recCong','Recebimento congelados — máximo (°C)'],['recRes','Recebimento resfriados — máximo (°C)'],['amostraH','Guarda de amostras (horas)']];
-    $('#aj-lim').innerHTML=LIM.map(([k,n])=>`<div class="field"><label class="lbl" for="ajl-${k}">${n}</label><input id="ajl-${k}" type="number" step="any" value="${WC.lim[k]}"></div>`).join('');
-    $('#aj-addeq').onclick=()=>{WC.equip.push({id:uid(),nome:'Novo equipamento',tipo:'resfriado'});drawEq()};
-    $('#aj-addhig').onclick=()=>{WC.hig.push({id:uid(),area:'',tarefa:'',freq:'diaria'});drawHig()};
-    $('#aj-save').onclick=async()=>{if(!canSave())return;WC.refeicoes=$('#aj-ref').value.split('\n').map(s=>s.trim()).filter(Boolean);LIM.forEach(([k])=>{const v=Number($('#ajl-'+k).value);if(!isNaN(v))WC.lim[k]=v});
-      WC.equip=WC.equip.filter(e=>e.nome.trim());WC.hig=WC.hig.filter(t=>t.tarefa.trim());
-      try{await FS.setDoc(FS.doc(db,'config','geral'),{equip:WC.equip,refeicoes:WC.refeicoes,lim:WC.lim,hig:WC.hig,por:WHO(),at:new Date().toISOString()});toast('Ajustes salvos.')}catch(e){toast('Não foi possível salvar ('+(e.code||'erro')+').',true)}}}};
+  bind(){WC=JSON.parse(JSON.stringify(CFG));
+    $('#aj-rtn').value=WC.rt.nome||'';$('#aj-crn').value=WC.rt.crn||'';
+    const drawRo=()=>{$('#aj-ro').innerHTML=WC.rotina.map((t,i)=>`<div class="fgrid ajrow"><div class="field"><label class="lbl" for="ajr-n${i}">Item</label><input id="ajr-n${i}" value="${esc(t.nome)}"></div><div class="field"><label class="lbl" for="ajr-f${i}">Frequência</label><select id="ajr-f${i}">${Object.entries(FREQ).map(([k,n])=>`<option value="${k}"${k===t.freq?' selected':''}>${n}</option>`).join('')}</select></div><button class="btn sm" data-rmr="${i}" type="button">Remover</button></div>`).join('');
+      WC.rotina.forEach((t,i)=>{$('#ajr-n'+i).oninput=x=>t.nome=x.target.value;$('#ajr-f'+i).onchange=x=>t.freq=x.target.value});$$('[data-rmr]').forEach(b=>b.onclick=()=>{WC.rotina.splice(+b.dataset.rmr,1);drawRo()})};
+    const drawPl=()=>{$('#aj-pl').innerHTML=WC.planilhas.map((t,i)=>`<div class="fgrid ajrow2"><div class="field"><label class="lbl" for="ajp-n${i}">Planilha</label><input id="ajp-n${i}" value="${esc(t.nome)}"></div><button class="btn sm" data-rmp="${i}" type="button">Remover</button></div>`).join('');
+      WC.planilhas.forEach((t,i)=>{$('#ajp-n'+i).oninput=x=>t.nome=x.target.value});$$('[data-rmp]').forEach(b=>b.onclick=()=>{WC.planilhas.splice(+b.dataset.rmp,1);drawPl()})};
+    drawRo();drawPl();
+    $('#aj-addro').onclick=()=>{WC.rotina.push({id:uid(),nome:'',freq:'diaria'});drawRo()};
+    $('#aj-addpl').onclick=()=>{WC.planilhas.push({id:uid(),nome:''});drawPl()};
+    $('#aj-save').onclick=async()=>{if(!canSave())return;WC.rt={nome:$('#aj-rtn').value.trim(),crn:$('#aj-crn').value.trim()};WC.rotina=WC.rotina.filter(t=>t.nome.trim());WC.planilhas=WC.planilhas.filter(t=>t.nome.trim());
+      try{await FS.setDoc(FS.doc(db,'config','geral'),{rt:WC.rt,rotina:WC.rotina,planilhas:WC.planilhas,por:WHO(),at:new Date().toISOString()});toast('Ajustes salvos.')}catch(e){toast('Não foi possível salvar ('+(e.code||'erro')+').',true)}}}};
 
 /* ---------- roteamento ---------- */
-const ORDER=['hoje','temperaturas','amostras','higienizacao','recebimento','equipe','treinamentos','ocorrencias','revisa','prazos','exportar','ajustes'];
+const ORDER=['hoje','rotina','planilhas','prazos','revisa','treinamentos','ocorrencias','fiscalizacao','exportar','ajustes'];
 function drawTabs(){const P=CFGLOADED?pendencias():[];const n=v=>P.filter(p=>p.v===v).length;
-  $('#tabs').innerHTML=ORDER.map(k=>{const c=k==='hoje'?0:n(k);return `<a href="#${k}"${k===CUR?' aria-current="page"':''}>${VIEWS[k].tab}${c?`<span class="n">${c}</span>`:''}</a>`}).join('');
-  const a=$('#tabs a[aria-current]');a&&a.scrollIntoView({block:'nearest',inline:'nearest'})}
+  $('#tabs').innerHTML=ORDER.map(k=>{const c=k==='hoje'?0:n(k);return `<a href="#${k}"${k===CUR?' aria-current="page"':''}>${VIEWS[k].tab}${c?`<span class="n">${c}</span>`:''}</a>`}).join('')}
 function route(){let h=(location.hash||'#hoje').slice(1);if(!VIEWS[h])h='hoje';CUR=h;const v=VIEWS[h];
-  $('#view').innerHTML=`<h2 class="vt">${v.title}</h2>${v.sub?`<p class="vs">${v.sub}</p>`:''}`+v.html();v.bind&&v.bind();refresh();window.scrollTo(0,0)}
+  $('#view').innerHTML=`<h2 class="vt">${v.title}</h2>${v.sub?`<p class="vs">${v.sub}</p>`:''}`+v.html();v.bind&&v.bind();refresh();window.scrollTo(0,0);const a=$('#tabs a[aria-current]');a&&a.scrollIntoView({block:'nearest',inline:'center'})}
 function refresh(){const v=VIEWS[CUR];try{v&&v.refresh&&v.refresh()}catch(e){console.error(e)}hydrate();drawTabs()}
 addEventListener('hashchange',route);
 setInterval(()=>{if(CUR==='hoje')refresh()},60000);
@@ -742,14 +678,17 @@ async function init(){
   catch(e){setConn('Sem conexão com o servidor. Verifique a internet e recarregue a página.',true);return}
   online=true;setConn('Conectado: tudo que for registrado aparece para todos que abrirem o app.');
   const err=e=>{console.error(e);setConn('Não foi possível ler os dados ('+(e.code||'erro')+'). Confira as regras do Firebase.',true)};
-  FS.onSnapshot(FS.query(FS.collection(db,'registros'),FS.where('dia','>=',addDays(TODAY(),-8))),s=>{REGS=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.at).localeCompare(String(a.at)));refresh()},err);
+  const byAt=(a,b)=>String(b.at).localeCompare(String(a.at));
+  FS.onSnapshot(FS.query(FS.collection(db,'registros'),FS.where('dia','>=',addDays(TODAY(),-35))),s=>{REGS=s.docs.map(d=>({id:d.id,...d.data()})).sort(byAt);refresh()},err);
+  FS.onSnapshot(FS.query(FS.collection(db,'registros'),FS.where('tipo','==','planilha')),s=>{PLAN=s.docs.map(d=>({id:d.id,...d.data()})).sort(byAt);refresh()},err);
+  FS.onSnapshot(FS.query(FS.collection(db,'registros'),FS.where('tipo','==','trein')),s=>{TREIN=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.data||b.dia).localeCompare(String(a.data||a.dia)));refresh()},err);
   FS.onSnapshot(FS.collection(db,'itens'),s=>{ITENS={};s.forEach(d=>ITENS[d.id]=d.data());refresh()},err);
   FS.onSnapshot(FS.collection(db,'docs'),s=>{DOCS={};s.forEach(d=>DOCS[d.id]=d.data());refresh()},err);
-  FS.onSnapshot(FS.doc(db,'status','higiene'),s=>{HIG=s.exists()?s.data():{};refresh()},err);
-  FS.onSnapshot(FS.doc(db,'config','geral'),s=>{if(s.exists()){const c=s.data();CFG={...JSON.parse(JSON.stringify(DEF)),...c,lim:{...DEF.lim,...(c.lim||{})}}}const first=!CFGLOADED;CFGLOADED=true;
-    const a=document.activeElement;if(first&&!(a&&$('#view').contains(a)&&a.tagName!=='BUTTON'))route();else refresh()},e=>{CFGLOADED=true;err(e)});
+  FS.onSnapshot(FS.doc(db,'config','geral'),s=>{if(s.exists()){const c=s.data();CFG={...JSON.parse(JSON.stringify(DEF)),rt:{...DEF.rt,...(c.rt||{})}};if(Array.isArray(c.rotina)&&c.rotina.length)CFG.rotina=c.rotina;if(Array.isArray(c.planilhas)&&c.planilhas.length)CFG.planilhas=c.planilhas}
+    const firstLoad=!CFGLOADED;CFGLOADED=true;const a=document.activeElement;if(firstLoad&&!(a&&$('#view').contains(a)&&a.tagName!=='BUTTON'))route();else refresh()},e=>{CFGLOADED=true;err(e)});
 }
 route();init();
+
 </script>
 </body>
 </html>

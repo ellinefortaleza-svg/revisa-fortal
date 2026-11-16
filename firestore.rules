@@ -16,11 +16,11 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Registros diários (temperaturas, amostras, higienização, recebimento, equipe, treinamentos, ocorrências)
+    // Registros (rotina diária, planilhas, treinamentos, ocorrências)
     match /registros/{regId} {
       allow read: if true;
       allow create: if temNome(request.resource.data)
-        && request.resource.data.tipo in ['temp','tempalim','amostra','higiene','receb','equipe','trein','ocorr']
+        && request.resource.data.tipo is string && request.resource.data.tipo.size() <= 20
         && request.resource.data.dia is string
         && request.resource.data.size() <= 40;
       // só permite acrescentar informação (ex.: descarte de amostra); autor, tipo e data não mudam
