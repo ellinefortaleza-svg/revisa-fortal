@@ -1,22 +1,67 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Qualquer pessoa com o link lê e registra itens do checklist.
-    // Só aceita gravações no formato do app e ninguém pode apagar.
+    function temNome(d) {
+      return d.por is string && d.por.size() > 0 && d.por.size() <= 60;
+    }
+
+    // Itens do relatório da Revisa
     match /itens/{itemId} {
       allow read: if true;
       allow create, update: if itemId.size() <= 10
-        && request.resource.data.keys().hasOnly(['s','obs','at','por','hist'])
+        && request.resource.data.keys().hasOnly(['s','obs','at','por','hist','fotos'])
         && request.resource.data.s in ['pendente','andamento','concluido']
-        && request.resource.data.por is string
-        && request.resource.data.por.size() > 0
-        && request.resource.data.por.size() <= 60
-        && request.resource.data.obs is string
-        && request.resource.data.obs.size() <= 2000
-        && request.resource.data.hist is list
-        && request.resource.data.hist.size() <= 30;
+        && temNome(request.resource.data)
+        && request.resource.data.hist is list && request.resource.data.hist.size() <= 30;
       allow delete: if false;
     }
+
+    // Registros diários (temperaturas, amostras, higienização, recebimento, equipe, treinamentos, ocorrências)
+    match /registros/{regId} {
+      allow read: if true;
+      allow create: if temNome(request.resource.data)
+        && request.resource.data.tipo in ['temp','tempalim','amostra','higiene','receb','equipe','trein','ocorr']
+        && request.resource.data.dia is string
+        && request.resource.data.size() <= 40;
+      // só permite acrescentar informação (ex.: descarte de amostra); autor, tipo e data não mudam
+      allow update: if request.resource.data.tipo == resource.data.tipo
+        && request.resource.data.por == resource.data.por
+        && request.resource.data.at == resource.data.at
+        && request.resource.data.dia == resource.data.dia
+        && request.resource.data.size() <= 40;
+      allow delete: if false;
+    }
+
+    // Fotos (comprimidas no celular)
+    match /fotos/{fotoId} {
+      allow read: if true;
+      allow create: if temNome(request.resource.data)
+        && request.resource.data.img is string
+        && request.resource.data.img.size() < 1000000;
+      allow update, delete: if false;
+    }
+
+    // Prazos e controles (dedetização, filtro, caixa d'água, alvará...)
+    match /docs/{docId} {
+      allow read: if true;
+      allow create, update: if temNome(request.resource.data) && request.resource.data.size() <= 20;
+      allow delete: if false;
+    }
+
+    // Situação das tarefas de higienização
+    match /status/{stId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.size() <= 300;
+      allow delete: if false;
+    }
+
+    // Ajustes (equipamentos, refeições, limites, tarefas)
+    match /config/{cfgId} {
+      allow read: if true;
+      allow create, update: if temNome(request.resource.data);
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

@@ -5,142 +5,278 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f7a63">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Revisa Fortal">
+<meta name="apple-mobile-web-app-title" content="Controle Fortal">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Adequação Sanitária Fortal</title>
+<title>Controle Sanitário Fortal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: cabeçalho com prazo, três painéis de responsável que funcionam como filtro, lista agrupada por área do relatório */
+/* Layout: cabeçalho com nome de quem registra, abas roláveis fixas no topo, cada aba = formulário em cima + registros embaixo */
 :root{
   --bg:#f4f6f5; --surface:#ffffff; --ink:#18221f; --muted:#5d6b66; --line:#dbe2df;
-  --rt:#0f7a63; --rt-soft:#e2f2ed;
-  --mn:#b25d0c; --mn-soft:#f8ecdf;
-  --gs:#3f4fa3; --gs-soft:#e6e9f7;
-  --ok:#1f8a4c; --warn:#c7820a; --risk:#b8322a; --risk-soft:#fbe7e5;
+  --rt:#0f7a63; --rt-soft:#e2f2ed; --mn:#b25d0c; --mn-soft:#f8ecdf; --gs:#3f4fa3; --gs-soft:#e6e9f7;
+  --ok:#1f8a4c; --ok-soft:#e3f4ea; --warn:#a86a00; --warn-soft:#fbf0d9; --bad:#b8322a; --bad-soft:#fbe7e5;
   --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+@media (prefers-color-scheme:dark){:root{
   --bg:#111816; --surface:#19221f; --ink:#e7eeeb; --muted:#9aa9a3; --line:#2b3632;
   --rt:#4cc9a8; --rt-soft:#173a31; --mn:#f0a35a; --mn-soft:#3b2a19; --gs:#9aa8f2; --gs-soft:#252b4a;
-  --ok:#58c98a; --warn:#e9b04a; --risk:#f07a70; --risk-soft:#3d1f1c; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#111816; --surface:#19221f; --ink:#e7eeeb; --muted:#9aa9a3; --line:#2b3632;
-  --rt:#4cc9a8; --rt-soft:#173a31; --mn:#f0a35a; --mn-soft:#3b2a19; --gs:#9aa8f2; --gs-soft:#252b4a;
-  --ok:#58c98a; --warn:#e9b04a; --risk:#f07a70; --risk-soft:#3d1f1c; color-scheme:dark}
+  --ok:#58c98a; --ok-soft:#173526; --warn:#e9b04a; --warn-soft:#3a2e14; --bad:#f07a70; --bad-soft:#3d1f1c; color-scheme:dark}}
 *{box-sizing:border-box}
 html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
-.wrap{max-width:860px;margin:0 auto;padding-block:20px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
-header{display:flex;flex-direction:column;gap:6px}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:900px;margin:0 auto}
+header.top{padding-block:16px 10px}
+header.top .wrap{display:flex;flex-direction:column;gap:10px}
 .eyebrow{font-family:var(--display);text-transform:uppercase;letter-spacing:.08em;font-size:13px;color:var(--muted);font-weight:600}
-h1{font-family:var(--display);font-size:34px;line-height:1.05;margin:0;font-weight:700;text-wrap:balance}
-.meta{color:var(--muted);font-size:13.5px}
-.deadline{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:6px;padding:10px 14px;border:1px solid var(--line);border-left:4px solid var(--risk);background:var(--surface);border-radius:8px}
-.deadline b{font-family:var(--display);font-size:30px;line-height:1;color:var(--risk);font-variant-numeric:tabular-nums}
-.deadline span{font-size:13.5px;color:var(--muted)}
-.owners{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-@media (max-width:560px){.owners{grid-template-columns:1fr}}
-.owner{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:12px 14px;border-radius:10px;background:var(--surface);border:1.5px solid var(--line);min-width:0}
-.owner:focus-visible,.chip:focus-visible,.st:focus-visible,button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-.owner[aria-pressed="true"]{border-color:var(--c);background:var(--cs)}
-.owner .on{font-family:var(--display);font-size:19px;font-weight:700;color:var(--c);text-transform:uppercase;letter-spacing:.02em}
-.owner .cnt{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
-.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--c)}
-.o-rt{--c:var(--rt);--cs:var(--rt-soft)} .o-mn{--c:var(--mn);--cs:var(--mn-soft)} .o-gs{--c:var(--gs);--cs:var(--gs-soft)}
-.scope{padding:12px 14px;border-radius:8px;background:var(--cs);color:var(--ink);font-size:14px}
-.scope strong{color:var(--c)}
-.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.chip{all:unset;cursor:pointer;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;background:var(--surface)}
+h1{font-family:var(--display);font-size:30px;line-height:1.05;margin:2px 0 0;font-weight:700}
+.who{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:10px 12px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px}
+.who label{font-weight:700;font-size:14px}
+.who input{flex:1 1 200px;min-width:0}
+.who.need{border-color:var(--bad);background:var(--bad-soft)}
+.conn{font-size:12.5px;color:var(--muted)}
+.conn.bad{color:var(--bad);font-weight:600}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.tabrow{display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:thin}
+.tabrow a{flex:none;text-decoration:none;color:var(--muted);font-weight:600;font-size:14px;padding:7px 12px;border-radius:999px;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.tabrow a[aria-current="page"]{background:var(--ink);color:var(--bg)}
+.tabrow a .n{font-size:11px;background:var(--bad);color:#fff;border-radius:999px;padding:0 6px;line-height:17px}
+main{padding-block:16px 80px}
+main .wrap{display:flex;flex-direction:column;gap:16px}
+.vt{font-family:var(--display);font-size:26px;margin:0;font-weight:700}
+.vs{margin:-10px 0 0;color:var(--muted);font-size:14px;max-width:65ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card h3{margin:0;font-family:var(--display);font-size:18px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+.card h3 small{font-family:var(--body);text-transform:none;letter-spacing:0;font-weight:500;color:var(--muted);font-size:13px}
+.ref{font-size:13px;color:var(--muted);background:var(--bg);border-radius:8px;padding:8px 10px}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+@media (max-width:560px){.fgrid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0;border:0;margin:0;padding:0}
+.field.full{grid-column:1/-1}
+.lbl{font-size:13px;font-weight:600;color:var(--ink);padding:0}
+.req{color:var(--bad)}
+.help{font-size:12.5px;color:var(--muted)}
+.help.ok{color:var(--ok);font-weight:600}.help.bad{color:var(--bad);font-weight:600}
+input,select,textarea{font:inherit;font-size:15px;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;min-width:0}
+textarea{resize:vertical;min-height:44px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible,label:focus-within{outline:2px solid var(--rt);outline-offset:1px}
+.checks{display:flex;flex-direction:column;gap:4px}
+.chk{display:flex;gap:8px;align-items:flex-start;font-size:14px;padding:4px 0;cursor:pointer}
+.chk input{width:18px;height:18px;flex:none;margin-top:2px;accent-color:var(--rt)}
+.segs{display:flex;flex-wrap:wrap;gap:6px}
+.segs label{cursor:pointer;position:relative}
+.segs input{position:absolute;left:0;top:0;width:1px;height:1px;opacity:0;pointer-events:none}
+.segs span{display:inline-block;padding:7px 14px;border-radius:999px;border:1px solid var(--line);font-size:14px;background:var(--bg)}
+.segs input:checked+span{background:var(--rt);border-color:var(--rt);color:#fff;font-weight:600}
+.factions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.btn{font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--rt);border-color:var(--rt);color:#fff}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.6;cursor:wait}
+.fotobtn{display:inline-flex;align-self:flex-start;gap:6px;align-items:center;padding:8px 12px;border-radius:8px;border:1.5px dashed var(--rt);color:var(--rt);font-weight:600;font-size:14px;cursor:pointer}
+.thumbs{display:flex;flex-wrap:wrap;gap:6px}
+.thumbs img,.pend img{width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);background:var(--bg);cursor:zoom-in}
+.pend{position:relative}
+.pend button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--bad);color:#fff;font-weight:700;cursor:pointer;line-height:1}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{display:flex;flex-direction:column;gap:2px;padding:12px;border-radius:10px;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c,var(--line));text-decoration:none;color:var(--ink);min-width:0}
+.tile b{font-family:var(--display);font-size:28px;line-height:1;font-variant-numeric:tabular-nums}
+.tile span{font-size:13px;color:var(--muted)}
+.tile.ok{--c:var(--ok)}.tile.warn{--c:var(--warn)}.tile.bad{--c:var(--bad)}
+.plist{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.plist li a{display:flex;gap:10px;align-items:flex-start;text-decoration:none;color:var(--ink);padding:8px 10px;border-radius:8px;background:var(--bg);font-size:14px}
+.plist li a::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;margin-top:6px;background:var(--c,var(--warn))}
+.plist li.bad a{--c:var(--bad)}
+.allok{color:var(--ok);font-weight:600;font-size:14px}
+.tgrid{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+td.okc{color:var(--ok);font-weight:700}td.badc{color:var(--bad);font-weight:700}td.mis{color:var(--muted)}
+.pill{flex:none;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.none{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.reg{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);border-left:4px solid var(--line)}
+.reg.nc{border-left-color:var(--bad)}
+.reg-h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.reg-t{display:flex;flex-direction:column;min-width:0}
+.kind{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+.reg-d{font-size:14px;color:var(--muted)}
+.reg-a{font-size:14px}
+.reg-m{font-size:12.5px;color:var(--muted)}
+.regs{display:flex;flex-direction:column;gap:8px}
+.day{margin:6px 0 0;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.day small{font-weight:500}
+.empty{color:var(--muted);font-size:14px;margin:0}
+.feed{display:flex;flex-direction:column;margin:0;padding:0;list-style:none}
+.feed li{display:grid;grid-template-columns:52px minmax(0,1fr);gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:14px}
+.feed li:first-child{border-top:0}
+.feed time{color:var(--muted);font-variant-numeric:tabular-nums}
+.feed .by{color:var(--muted)}
+.task{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+.task:first-of-type{border-top:0}
+.task .tt{font-weight:600}
+.task .tm{font-size:12.5px;color:var(--muted)}
+.task .ta{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;cursor:pointer;padding:6px 12px;border-radius:999px;border:1px solid var(--line);font-size:13.5px;background:var(--surface);color:var(--ink)}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.spacer{flex:1}
-.btn{font:inherit;font-size:13.5px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
-.save{font-size:12.5px;color:var(--muted)}
-section.area{display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
-section.area h2{margin:0;padding:10px 14px;font-family:var(--display);font-size:17px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
-section.area h2 small{font-family:var(--body);font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.o-rt{--c:var(--rt);--cs:var(--rt-soft)}.o-mn{--c:var(--mn);--cs:var(--mn-soft)}.o-gs{--c:var(--gs);--cs:var(--gs-soft)}
+.area{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.area h4{margin:0;padding:10px 14px;font-family:var(--display);font-size:16px;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+.area h4 small{font-family:var(--body);font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:500}
 .item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:12px 14px;border-top:1px solid var(--line)}
 .item:first-of-type{border-top:0}
-.st{all:unset;cursor:pointer;width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;margin-top:1px;font-size:14px;font-weight:700}
+.st{all:unset;cursor:pointer;width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;font-size:14px;font-weight:700;margin-top:1px}
 .st[data-s="andamento"]{border-color:var(--warn);background:conic-gradient(var(--warn) 0 50%,transparent 50% 100%)}
 .st[data-s="concluido"]{border-color:var(--ok);background:var(--ok);color:var(--surface)}
-.txt{display:flex;flex-direction:column;gap:5px;min-width:0}
+.itx{display:flex;flex-direction:column;gap:5px;min-width:0}
 .find{font-weight:600}
 .item.done .find{text-decoration:line-through;color:var(--muted)}
 .act{font-size:14px;color:var(--muted)}
-.tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
 .tag{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--cs);color:var(--c)}
-.tag.risk{--c:var(--risk);--cs:var(--risk-soft)}
-.apoio{font-size:12.5px;color:var(--muted)}
-.stl{font-size:12.5px;color:var(--muted)}
-details summary{cursor:pointer;font-size:13px;color:var(--muted);list-style:none}
-details summary::-webkit-details-marker{display:none}
-details summary::before{content:"+ "}
-details[open] summary::before{content:"– "}
-textarea{width:100%;margin-top:6px;font:inherit;font-size:14px;padding:8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical;min-height:56px}
-.note{font-size:13px;color:var(--muted)}
-.empty{padding:24px;text-align:center;color:var(--muted);background:var(--surface);border-radius:10px;border:1px dashed var(--line)}
-footer{font-size:12.5px;color:var(--muted)}
-.who{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 14px;background:var(--surface);border:1.5px solid var(--line);border-radius:10px}
-.who label{font-weight:700;font-size:14px}
-.who input{flex:1 1 200px;min-width:0;font:inherit;padding:8px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
-.who.need{border-color:var(--risk);background:var(--risk-soft)}
-.who .hint{flex-basis:100%;font-size:12.5px;color:var(--muted)}
-.by{font-size:12.5px;color:var(--ink);font-weight:600}
-.hist{margin:6px 0 0;padding-left:16px;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
-@media (prefers-reduced-motion:no-preference){.bar i{transition:width .3s}}
+.tag.risk{--c:var(--bad);--cs:var(--bad-soft)}
+details summary{cursor:pointer;font-size:13px;color:var(--rt);font-weight:600}
+.hist{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--muted)}
+.doc{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid var(--line)}
+.doc:first-of-type{border-top:0}
+.doc-h{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.doc-h strong{display:block}
+.doc .meta{font-size:13px;color:var(--muted)}
+.modal{position:fixed;inset:0;z-index:30;background:rgba(10,16,14,.55);display:flex;align-items:flex-end;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px))}
+.mbox{background:var(--surface);color:var(--ink);width:100%;max-width:620px;max-height:100%;overflow:auto;border-radius:14px 14px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+@media (min-width:700px){.modal{align-items:center}.mbox{border-radius:14px}}
+.mbox h3{margin:0 0 10px;font-family:var(--display);font-size:22px}
+.mclose{float:right}
+.light{position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.88);display:grid;place-items:center;padding:16px;cursor:zoom-out}
+.light img{max-width:100%;max-height:100%;border-radius:6px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:14px;max-width:calc(100% - 32px)}
+.toast.bad{background:var(--bad);color:#fff}
+.report{background:#fff;color:#111;border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.report h2{margin:0;font-size:20px}.report h3{margin:8px 0 0;font-size:16px;border-bottom:2px solid #111;padding-bottom:3px}
+.report table{font-size:12.5px}.report th,.report td{border-bottom:1px solid #ccc;color:#111}
+.report .thumbs img{width:110px;height:110px}
+.sign{display:flex;flex-wrap:wrap;gap:40px;margin-top:30px}
+.sign div{flex:1 1 220px;border-top:1px solid #111;padding-top:4px;font-size:12.5px;text-align:center}
+.rowbtns{display:flex;flex-wrap:wrap;gap:8px}
+@media print{
+  body{background:#fff}
+  header.top,nav.tabs,.noprint,.toast,.modal{display:none!important}
+  main{padding:0}.report{border:0;padding:0}
+  .report tr,.report .thumbs{break-inside:avoid}
+}
+@media (prefers-reduced-motion:no-preference){.tile,.btn{transition:transform .1s}.btn:active{transform:scale(.98)}}
 </style>
 </head>
 <body>
-
-<div class="wrap">
-  <header>
-    <div class="eyebrow">Revisa · Relatório de Inspeção Sanitária</div>
-    <h1>Adequação Sanitária Fortal</h1>
-    <div class="meta">Fortal Comércio de Alimentos LTDA · Rua Comandante Poty, 33, loja A, 18 do Forte · Inspeção em 06/11/2026 · Recebido em 09/11/2026 às 15h</div>
-    <div class="deadline"><b id="days">–</b><span id="daysTxt">dias para o prazo de 09/12/2026</span></div>
-  </header>
-
+<header class="top pad"><div class="wrap">
+  <div><div class="eyebrow">Fortal Comércio de Alimentos · Nutrição e Vigilância Sanitária</div><h1>Controle Sanitário Fortal</h1></div>
   <div class="who" id="whoBox">
     <label for="who">Quem está registrando?</label>
-    <input id="who" type="text" placeholder="Seu nome (ex.: Thaís – Nutricionista)" autocomplete="name" maxlength="60">
-    <span class="hint" id="whoHint">Seu nome fica gravado em cada item que você marcar, com a data e a hora.</span>
+    <input id="who" type="text" placeholder="Seu nome e função (ex.: Thaís – Nutricionista)" autocomplete="name" maxlength="60">
   </div>
-
-  <div class="owners" id="owners"></div>
-  <div class="scope" id="scope" hidden></div>
-
-  <div class="tools">
-    <button class="chip" id="f-all" aria-pressed="true">Todos</button>
-    <button class="chip" id="f-open" aria-pressed="false">Em aberto</button>
-    <button class="chip" id="f-risk" aria-pressed="false">Risco imediato</button>
-    <button class="chip" id="f-done" aria-pressed="false">Concluídos</button>
-    <span class="spacer"></span>
-    <button class="btn" id="copy">Copiar pendências</button>
-  </div>
-  <div class="save" id="save">Carregando andamento…</div>
-
-  <div id="list"></div>
-
-  <footer>Toque no círculo para mudar o status: pendente → em andamento → concluído. As anotações servem de registro para o ofício de resposta à Revisa. Itens da área de guarda de panelas e do abrigo de resíduos podem estar incompletos se faltou alguma página do relatório.</footer>
-</div>
+  <div class="conn" id="conn">Conectando ao servidor…</div>
+</div></header>
+<nav class="tabs pad"><div class="wrap tabrow" id="tabs"></div></nav>
+<main class="pad"><div class="wrap" id="view"></div></main>
+<div class="modal" id="modal" hidden><div class="mbox" role="dialog" aria-modal="true"><button class="btn sm mclose" id="mclose" type="button">Fechar</button><div id="mbody"></div></div></div>
+<div class="light" id="light" hidden><img id="lightImg" alt="Foto ampliada"></div>
+<div class="toast" id="toast" hidden role="status"></div>
 
 <script type="module">
-let FS=null;
 import { firebaseConfig } from "./firebase-config.js";
+let FS=null, db=null, online=false;
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const dKey=(d=new Date())=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const TODAY=()=>dKey();
+const pk=k=>{const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(k,n)=>{const x=pk(k);x.setDate(x.getDate()+n);return dKey(x)};
+const addMonths=(k,n)=>{const x=pk(k);x.setMonth(x.getMonth()+n);return dKey(x)};
+const diffDays=(a,b)=>Math.round((pk(b)-pk(a))/864e5);
+const fD=k=>k?k.split('-').reverse().join('/'):'—';
+const fT=iso=>{try{return new Date(iso).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}catch(e){return''}};
+const fDT=iso=>{try{return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){return''}};
+const isoDay=iso=>dKey(new Date(iso));
+const nowHM=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
+const uid=()=>Math.random().toString(36).slice(2,9);
+const fmtN=n=>typeof n==='number'?n.toLocaleString('pt-BR',{maximumFractionDigits:1}):(n??'');
+const plural=(n,a,b)=>n+' '+(n===1?a:b);
 
-const OWN={
-  rt:{n:"Nutricionista RT",cls:"o-rt",scope:"<strong>Cabe à nutricionista RT:</strong> boas práticas, Manual e POPs, higienização e seu cronograma, armazenamento e rotulagem dos alimentos, conduta e treinamento dos manipuladores, controle de pragas e descarte. Ela executa ou supervisiona e deixa registrado."},
-  mn:{n:"Manutenção / Obra",cls:"o-mn",scope:"<strong>Cabe à manutenção:</strong> estrutura física e instalações — ralos, portas, telas, elétrica, iluminação, ventilação, piso, paredes, teto e equipamentos. A RT só confere se ficou adequado."},
-  gs:{n:"Gestão / Administrativo",cls:"o-gs",scope:"<strong>Cabe à gestão:</strong> alvará, documentação dos veículos, contratos com terceiros e compras (utensílios, lixeiras, armários, dispensers)."}
+/* ---------- nome de quem registra ---------- */
+const WHO=()=>($('#who').value||'').trim();
+try{$('#who').value=localStorage.getItem('fortal-revisa-nome')||''}catch(e){}
+$('#who').addEventListener('input',()=>{try{localStorage.setItem('fortal-revisa-nome',WHO())}catch(e){} if(WHO())$('#whoBox').classList.remove('need')});
+function needName(){if(WHO())return true;$('#whoBox').classList.add('need');window.scrollTo({top:0,behavior:'smooth'});$('#who').focus();toast('Escreva seu nome no topo antes de registrar.',true);return false}
+function canSave(){if(!online){toast('Sem conexão com o servidor. Nada foi salvo.',true);return false}return needName()}
+let tt;function toast(m,bad){const t=$('#toast');t.textContent=m;t.className='toast'+(bad?' bad':'');t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,3000)}
+function setConn(m,bad){const c=$('#conn');c.textContent=m;c.className='conn'+(bad?' bad':'')}
+
+/* ---------- configuração padrão ---------- */
+const DEF={
+  equip:[{id:'camara',nome:'Câmara fria',tipo:'congelado'},{id:'fz1',nome:'Freezer 1',tipo:'congelado'},{id:'fz2',nome:'Freezer 2',tipo:'congelado'},{id:'ref1',nome:'Geladeira / refrigerador',tipo:'resfriado'}],
+  refeicoes:['Café da manhã','Almoço','Jantar'],
+  lim:{congelado:-18,resfriado:5,quente:60,recCong:-12,recRes:7,amostraH:72},
+  hig:[
+    {id:'h1',area:'Cozinha',tarefa:'Bancadas e superfícies de manipulação',freq:'diaria'},
+    {id:'h2',area:'Cozinha',tarefa:'Piso da cozinha e da área de cocção',freq:'diaria'},
+    {id:'h3',area:'Geral',tarefa:'Ralos e grelhas (cozinha, lavagem, corredor, freezers)',freq:'diaria'},
+    {id:'h4',area:'Geral',tarefa:'Lixeiras e retirada do lixo',freq:'diaria'},
+    {id:'h5',area:'Sanitários',tarefa:'Sanitários feminino e masculino',freq:'diaria'},
+    {id:'h6',area:'Abrigo de resíduos',tarefa:'Abrigo de resíduos e coletores',freq:'diaria'},
+    {id:'h7',area:'Cozinha',tarefa:'Utensílios, panelas e equipamentos após o uso',freq:'diaria'},
+    {id:'h8',area:'Cozinha',tarefa:'Lavatório de mãos abastecido (sabonete, papel, álcool)',freq:'diaria'},
+    {id:'h9',area:'Área de lavagem',tarefa:'Retirada de restos de alimentos do piso',freq:'diaria'},
+    {id:'h10',area:'Cozinha',tarefa:'Paredes e portas (inclusive porta de enrolar)',freq:'semanal'},
+    {id:'h11',area:'Geral',tarefa:'Telas milimétricas de janelas e aberturas',freq:'semanal'},
+    {id:'h12',area:'Cozinha',tarefa:'Coifa e exaustores (limpeza externa)',freq:'semanal'},
+    {id:'h13',area:'Área dos freezers',tarefa:'Freezers e câmara fria por dentro',freq:'semanal'},
+    {id:'h14',area:'Estoque',tarefa:'Prateleiras, estrados e paletes',freq:'semanal'},
+    {id:'h15',area:'Cocção menor',tarefa:'Passthrough',freq:'semanal'},
+    {id:'h16',area:'Entrada',tarefa:'Bebedouro',freq:'semanal'},
+    {id:'h17',area:'Geral',tarefa:'Luminárias e teto',freq:'mensal'},
+    {id:'h18',area:'Corredor',tarefa:'Armários dos funcionários',freq:'mensal'},
+    {id:'h19',area:'Transporte',tarefa:'Higienização interna dos veículos de transporte',freq:'semanal'}
+  ]
 };
-// [id, área, constatação, ação, responsável, apoio, risco imediato]
+const FREQ={diaria:'Diária',semanal:'Semanal',mensal:'Mensal'};
+let CFG=JSON.parse(JSON.stringify(DEF));
+const TIPOEQ={congelado:'Congelados',resfriado:'Resfriados',quente:'Quente'};
+const limTxt=t=>t==='quente'?`≥ ${CFG.lim.quente} °C`:`≤ ${CFG.lim[t]} °C`;
+const confEquip=(t,v)=>t==='quente'?v>=CFG.lim.quente:v<=CFG.lim[t];
+const ETAPAS=[{k:'Cocção (centro do alimento)',op:'>=',v:70},{k:'Reaquecimento',op:'>=',v:70},{k:'Distribuição quente',op:'>=',v:60},{k:'Distribuição fria',op:'<=',v:10},{k:'Resfriamento (após 2 horas)',op:'<=',v:10}];
+const etTxt=e=>`${e.op==='>='?'≥':'≤'} ${e.v} °C`;
+
+/* ---------- prazos e controles ---------- */
+const PRAZOS=[
+  {id:'pragas',g:'Controle de pragas',nome:'Dedetização / desratização do estabelecimento',m:6,o:'Certificado da empresa controladora de pragas (licenciada), com produtos usados e validade.'},
+  {id:'vei1',g:'Controle de pragas',nome:'Dedetização do veículo 1',m:6,o:'Exigência do relatório da Revisa.'},
+  {id:'vei2',g:'Controle de pragas',nome:'Dedetização do veículo 2',m:6,o:'Exigência do relatório da Revisa.'},
+  {id:'filtro',g:'Água',nome:'Troca do filtro do bebedouro',m:6,o:'Colar etiqueta no bebedouro com a data da troca (apontado no relatório).'},
+  {id:'caixa',g:'Água',nome:'Limpeza e desinfecção da caixa d\'água',m:6,o:'Registro ou certificado da empresa; obrigatório a cada 6 meses.'},
+  {id:'agua',g:'Água',nome:'Análise de potabilidade da água',m:6,o:'Laudo de laboratório.'},
+  {id:'mbp',g:'Documentação',nome:'Manual de Boas Práticas atualizado',m:12,o:'Assinado pela nutricionista RT. Apontado como desatualizado.'},
+  {id:'pops',g:'Documentação',nome:'POPs (higienização, pragas, caixa d\'água, saúde dos manipuladores)',m:12,o:'Os 4 POPs obrigatórios, revisados junto com o Manual.'},
+  {id:'cert',g:'Documentação',nome:'Certificados de manipulação de alimentos — todos os funcionários',m:12,o:'Apontado no relatório. Incluir novos funcionários.'},
+  {id:'aso',g:'Documentação',nome:'Atestados de saúde (ASO) dos manipuladores',m:12,o:'Admissional e periódico.'},
+  {id:'crlv',g:'Documentação',nome:'Documentação dos 2 veículos de transporte',m:12,o:'CRLV e autorização sanitária de transporte, se exigida.'},
+  {id:'alvara',g:'Documentação',nome:'Alvará Sanitário',m:12,o:'Vencido na inspeção de 06/11/2026.'},
+  {id:'coifa',g:'Manutenção',nome:'Limpeza técnica de coifa e dutos de exaustão',m:6,o:''},
+  {id:'termo',g:'Manutenção',nome:'Aferição dos termômetros',m:12,o:'Conferir com termômetro calibrado.'},
+  {id:'extint',g:'Manutenção',nome:'Recarga dos extintores',m:12,o:''}
+];
+
+/* ---------- itens do relatório da Revisa ---------- */
+const OWN={rt:{n:'Nutricionista RT',cls:'o-rt'},mn:{n:'Manutenção / Obra',cls:'o-mn'},gs:{n:'Gestão / Administrativo',cls:'o-gs'}};
 const ITEMS=[
 ["en1","Entrada","Diversas partes do piso danificadas","Recuperar o piso com material liso, lavável e impermeável.","mn"],
 ["en2","Entrada","Grelhas com acúmulo de água e sujidades","Incluir as grelhas no cronograma de higienização e conferir a execução.","rt"],
@@ -215,142 +351,405 @@ const ITEMS=[
 ["dc4","Documentação","Alvará Sanitário vencido","Protocolar a renovação do alvará.","gs","RT assina a responsabilidade técnica"]
 ];
 const AREAS=[...new Set(ITEMS.map(i=>i[1]))];
-const STL={pendente:"Pendente",andamento:"Em andamento",concluido:"Concluído"};
-const NEXT={pendente:"andamento",andamento:"concluido",concluido:"pendente"};
-let state={}, owner="rt", filt="all", db=null, canWrite=true, local=false;
+const STL={pendente:'Pendente',andamento:'Em andamento',concluido:'Concluído'};
+const NEXT={pendente:'andamento',andamento:'concluido',concluido:'pendente'};
+const PRAZO_REVISA='2026-12-09';
 
-const $=s=>document.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const st=id=>(state[id]&&state[id].s)||"pendente";
-const fmt=iso=>{try{return new Date(iso).toLocaleDateString("pt-BR")}catch(e){return""}};
-const fmtFull=iso=>{try{return new Date(iso).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"})}catch(e){return""}};
-const who=()=>($("#who").value||"").trim();
-try{$("#who").value=localStorage.getItem("fortal-revisa-nome")||""}catch(e){}
-$("#who").addEventListener("input",()=>{
-  try{localStorage.setItem("fortal-revisa-nome",who())}catch(e){}
-  if(who()){$("#whoBox").classList.remove("need");$("#whoHint").textContent="Seu nome fica gravado em cada item que você marcar, com a data e a hora."}
-});
+/* ---------- dados ---------- */
+let REGS=[],ITENS={},DOCS={},HIG={},CFGLOADED=false;const FOTO=new Map();
+const todayRegs=t=>REGS.filter(r=>r.dia===TODAY()&&(!t||r.tipo===t));
+const itemSt=id=>(ITENS[id]&&ITENS[id].s)||'pendente';
 
-(function days(){
-  const d=new Date(); d.setHours(0,0,0,0);
-  const n=Math.round((new Date(2026,11,9)-d)/86400000);
-  $("#days").textContent=n<0?"Vencido":n;
-  $("#daysTxt").textContent=n<0?"O prazo de 09/12/2026 passou":(n===1?"dia":"dias")+" para o prazo de 09/12/2026";
-})();
-
-function renderOwners(){
-  const el=$("#owners"); el.innerHTML="";
-  Object.entries(OWN).forEach(([k,o])=>{
-    const its=ITEMS.filter(i=>i[4]===k), done=its.filter(i=>st(i[0])==="concluido").length;
-    const b=document.createElement("button");
-    b.className="owner "+o.cls; b.id="own-"+k; b.setAttribute("aria-pressed",owner===k);
-    b.innerHTML=`<span class="on">${o.n}</span><span class="cnt">${done} de ${its.length} concluídos</span><span class="bar"><i style="width:${its.length?done/its.length*100:0}%"></i></span>`;
-    b.onclick=()=>{owner=owner===k?"":k;render()};
-    el.appendChild(b);
-  });
-  const sc=$("#scope");
-  if(owner){sc.hidden=false;sc.className="scope "+OWN[owner].cls;sc.innerHTML=OWN[owner].scope+" Toque de novo no painel para ver todos."}
-  else sc.hidden=true;
-}
-function visible(){
-  return ITEMS.filter(i=>{
-    if(owner&&i[4]!==owner)return false;
-    const s=st(i[0]);
-    if(filt==="open")return s!=="concluido";
-    if(filt==="done")return s==="concluido";
-    if(filt==="risk")return i[6]&&s!=="concluido";
-    return true;
-  });
-}
-function renderList(){
-  const its=visible(), el=$("#list"); el.innerHTML="";
-  if(!its.length){el.innerHTML='<div class="empty">Nenhum item neste filtro.</div>';return}
-  AREAS.forEach(a=>{
-    const g=its.filter(i=>i[1]===a); if(!g.length)return;
-    const all=ITEMS.filter(i=>i[1]===a), dn=all.filter(i=>st(i[0])==="concluido").length;
-    const sec=document.createElement("section"); sec.className="area";
-    sec.innerHTML=`<h2>${esc(a)}<small>${dn}/${all.length}</small></h2>`;
-    g.forEach(i=>{
-      const [id,,find,act,ow,apoio,risk]=i, s=st(id), r=state[id]||{};
-      const row=document.createElement("div"); row.className="item"+(s==="concluido"?" done":"");
-      row.innerHTML=`<button class="st" data-s="${s}" aria-label="Status: ${STL[s]}. Tocar para mudar">${s==="concluido"?"✓":""}</button>
-      <div class="txt"><div class="find">${esc(find)}</div><div class="act">${esc(act)}</div>
-      <div class="tags">${owner?"":`<span class="tag ${OWN[ow].cls}">${OWN[ow].n}</span>`}${risk?'<span class="tag risk">Risco imediato</span>':""}<span class="stl">${STL[s]}</span>${r.por&&r.at?`<span class="by">· ${esc(r.por)} em ${fmt(r.at)}</span>`:""}</div>
-      ${apoio?`<div class="apoio">Apoio: ${esc(apoio)}</div>`:""}
-      <details${r.obs?" open":""}><summary>${r.obs?"Anotação":"Anotar"}${(r.hist||[]).length?" e histórico":""}</summary><textarea id="obs-${id}" placeholder="Ex.: comprado em 12/11, foto do antes e depois na pasta" ${canWrite?"":"disabled"}>${esc(r.obs||"")}</textarea>${(r.hist||[]).length?`<ol class="hist">${r.hist.slice().reverse().map(h=>`<li>${fmtFull(h.at)} · ${esc(h.por)} · ${esc(h.o)}</li>`).join("")}</ol>`:""}</details></div>`;
-      const btn=row.querySelector(".st");
-      btn.disabled=!canWrite;
-      btn.onclick=()=>{if(!needName())return;save(id,{s:NEXT[s],obs:r.obs||""},"Marcou "+STL[NEXT[s]].toLowerCase())};
-      row.querySelector("textarea").onchange=e=>{if(!needName()){e.target.value=r.obs||"";return}save(id,{s,obs:e.target.value.trim()},"Anotou")};
-      sec.appendChild(row);
-    });
-    el.appendChild(sec);
-  });
-}
-function render(){renderOwners();renderList()}
-
-function needName(){
-  if(who())return true;
-  $("#whoBox").classList.add("need");
-  $("#whoHint").textContent="Escreva seu nome antes de marcar ou anotar um item.";
-  $("#who").focus();
-  return false;
-}
-async function save(id,v,o){
-  const now=new Date().toISOString(), prev=state[id]||{};
-  const hist=[...(prev.hist||[]),{o,por:who(),at:now}].slice(-30);
-  const rec={s:v.s,obs:v.obs,at:now,por:who(),hist};
-  state={...state,[id]:rec};
-  render();
-  if(local){try{localStorage.setItem("fortal-revisa",JSON.stringify(state))}catch(e){}return}
-  $("#save").textContent="Salvando…";
-  try{await FS.setDoc(FS.doc(db,"itens",id),rec);$("#save").textContent="Salvo. Todos que abrirem o app já veem."}
-  catch(e){
-    if(e&&e.code==="invalid_argument"){canWrite=false;render();$("#save").textContent="Você só pode visualizar este plano."}
-    else $("#save").textContent="Não foi possível salvar agora. Tente de novo em instantes.";
-  }
-}
-
-$("#copy").onclick=async()=>{
-  const its=ITEMS.filter(i=>(!owner||i[4]===owner)&&st(i[0])!=="concluido");
-  let t=`*Adequação Revisa — Fortal* (prazo 09/12/2026)\n*${owner?OWN[owner].n:"Todos"}* — ${its.length} pendências\n`;
-  AREAS.forEach(a=>{const g=its.filter(i=>i[1]===a);if(!g.length)return;t+=`\n*${a}*\n`;g.forEach(i=>{const r=state[i[0]]||{};t+=`• ${i[2]} — ${i[3]}${st(i[0])==="andamento"?` (em andamento${r.por?", "+r.por+" em "+fmt(r.at):""})`:""}\n`})});
-  try{await navigator.clipboard.writeText(t);$("#copy").textContent="Copiado"}
-  catch(e){$("#copy").textContent="Não foi possível copiar"}
-  setTimeout(()=>$("#copy").textContent="Copiar pendências",1800);
-};
-["all","open","risk","done"].forEach(f=>$("#f-"+f).onclick=()=>{filt=f;document.querySelectorAll(".tools .chip").forEach(c=>c.setAttribute("aria-pressed",c.id==="f-"+f));renderList()});
-
-render();
-
-(async function(){
-  const offline=msg=>{
-    local=true;
-    try{state=JSON.parse(localStorage.getItem("fortal-revisa")||"{}")}catch(e){state={}}
-    $("#save").textContent=msg;
-    render();
-  };
-  if(!firebaseConfig||!firebaseConfig.projectId||firebaseConfig.projectId.startsWith("COLE")){
-    local=true;
-    try{state=JSON.parse(localStorage.getItem("fortal-revisa")||"{}")}catch(e){state={}}
-    $("#save").textContent="Firebase ainda não configurado: o andamento fica salvo só neste aparelho.";
-    render();return;
-  }
+/* ---------- fotos ---------- */
+async function compress(file){
+  const url=URL.createObjectURL(file);
   try{
-    const app=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-    FS=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
-    db=FS.getFirestore(app.initializeApp(firebaseConfig));
-  }catch(e){offline("Sem conexão com o servidor: o que você marcar agora fica só neste aparelho.");return}
-  const timer=setTimeout(()=>{$("#save").textContent="Ainda carregando o andamento salvo. Verifique a internet."},10000);
-  FS.onSnapshot(FS.collection(db,"itens"),snap=>{
-    const s={}; snap.forEach(d=>{s[d.id]=d.data()});
-    state=s;
-    clearTimeout(timer);
-    if(/Carregando|Ainda/.test($("#save").textContent))$("#save").textContent="Andamento compartilhado: o que você marcar aparece para todos.";
-    const a=document.activeElement; if(a&&(a.tagName==="TEXTAREA"))return;
-    render();
-  },err=>{clearTimeout(timer);$("#save").textContent="Não foi possível carregar o andamento. Verifique a internet ou as regras do Firebase."});
-})();
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
+    let max=1280,q=.62,out='';
+    for(let k=0;k<5;k++){const s=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);out=c.toDataURL('image/jpeg',q);if(out.length<650000)break;max*=.8;q=Math.max(.35,q-.08)}
+    return out;
+  }finally{URL.revokeObjectURL(url)}
+}
+const PEND={};
+const fotoField=fid=>`<div class="field full"><span class="lbl">Fotos (opcional)</span><label class="fotobtn" for="${fid}-in">+ Tirar ou escolher foto</label><input type="file" id="${fid}-in" accept="image/*" multiple hidden><div class="thumbs" id="${fid}-pv"></div></div>`;
+function bindFotos(fid){PEND[fid]=[];const inp=$('#'+fid+'-in');if(!inp)return;inp.onchange=async()=>{for(const f of inp.files){try{PEND[fid].push(await compress(f))}catch(e){toast('Não foi possível ler essa imagem.',true)}}inp.value='';drawPend(fid)}}
+function drawPend(fid){const pv=$('#'+fid+'-pv');if(!pv)return;pv.innerHTML=(PEND[fid]||[]).map((u,i)=>`<span class="pend"><img src="${u}" alt="Foto ${i+1}"><button type="button" data-i="${i}" aria-label="Remover foto">×</button></span>`).join('');$$('button',pv).forEach(b=>b.onclick=()=>{PEND[fid].splice(+b.dataset.i,1);drawPend(fid)})}
+async function upFotos(list,ref){const ids=[];for(const img of list){const r=await FS.addDoc(FS.collection(db,'fotos'),{img,ref,por:WHO(),at:new Date().toISOString()});ids.push(r.id)}return ids}
+const thumbs=ids=>ids&&ids.length?`<div class="thumbs">${ids.map(id=>`<img data-foto="${esc(id)}" alt="Foto do registro">`).join('')}</div>`:'';
+function getFoto(id){if(!FOTO.has(id))FOTO.set(id,FS.getDoc(FS.doc(db,'fotos',id)).then(s=>s.exists()?s.data().img:'').catch(()=>''));return FOTO.get(id)}
+const BLANK='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+function hydrate(root=document){if(!online)return Promise.resolve();return Promise.all($$('img[data-foto]:not([data-h])',root).map(async im=>{im.dataset.h='1';im.src=BLANK;const u=await getFoto(im.dataset.foto);if(u)im.src=u}))}
+document.addEventListener('click',e=>{const im=e.target.closest('img[data-foto],.pend img');if(im&&im.src&&im.src!==BLANK){$('#lightImg').src=im.src;$('#light').hidden=false}});
+$('#light').onclick=()=>$('#light').hidden=true;
+
+/* ---------- formulários ---------- */
+function F(fid,f){
+  const id=`${fid}-${f.k}`,req=f.req?' <b class="req">*</b>':'',def=typeof f.def==='function'?f.def():(f.def??'');
+  const lab=`<label class="lbl" for="${id}">${esc(f.l)}${req}</label>`,cls='field'+(f.full||f.t==='textarea'?' full':'');
+  const help=f.help!=null?`<span class="help" id="${id}-h">${f.help}</span>`:'';
+  switch(f.t){
+    case 'select':return `<div class="${cls}">${lab}<select id="${id}">${(f.o||[]).map(o=>{const v=typeof o==='object'?o.v:o,t=typeof o==='object'?o.t:o;return `<option value="${esc(v)}"${v===def?' selected':''}>${esc(t)}</option>`}).join('')}</select>${help}</div>`;
+    case 'textarea':return `<div class="${cls}">${lab}<textarea id="${id}" rows="2" placeholder="${esc(f.ph||'')}">${esc(def)}</textarea>${help}</div>`;
+    case 'checks':return `<fieldset class="field full checks" id="${id}"><legend class="lbl">${esc(f.l)}</legend>${f.o.map((o,i)=>`<label class="chk"><input type="checkbox" value="${esc(o)}" id="${id}-${i}"${f.all?' checked':''}><span>${esc(o)}</span></label>`).join('')}</fieldset>`;
+    case 'radio':return `<fieldset class="field${f.full?' full':''}" id="${id}"><legend class="lbl">${esc(f.l)}${req}</legend><div class="segs">${f.o.map((o,i)=>`<label><input type="radio" name="${id}" value="${esc(o)}" id="${id}-${i}"${o===def?' checked':''}><span>${esc(o)}</span></label>`).join('')}</div></fieldset>`;
+    default:return `<div class="${cls}">${lab}<input id="${id}" type="${f.t||'text'}"${f.t==='number'?' step="any" inputmode="decimal"':''}${f.list?` list="${id}-dl"`:''} value="${esc(def)}" placeholder="${esc(f.ph||'')}">${f.list?`<datalist id="${id}-dl">${f.list.map(x=>`<option value="${esc(x)}">`).join('')}</datalist>`:''}${help}</div>`;
+  }
+}
+const formHTML=(fid,fields,btn,fotos=true)=>`<form class="form" id="${fid}" novalidate><div class="fgrid">${fields.map(f=>F(fid,f)).join('')}${fotos?fotoField(fid):''}</div><div class="factions"><button class="btn primary" type="submit">${esc(btn)}</button></div></form>`;
+function readForm(fid,fields){const v={};for(const f of fields){const id=`${fid}-${f.k}`;let x;
+  if(f.t==='checks')x=$$(`#${id} input:checked`).map(i=>i.value);
+  else if(f.t==='radio')x=($(`#${id} input:checked`)||{}).value||'';
+  else{x=$('#'+id).value.trim();if(f.t==='number'&&x!==''){x=Number(x.replace(',','.'));if(isNaN(x))return{err:`"${f.l}": número inválido.`}}}
+  if(f.req&&(x===''||x==null))return{err:`Preencha "${f.l}".`};v[f.k]=x}return{v}}
+function resetForm(fid,fields){const fm=$('#'+fid);if(!fm)return;fm.reset();fields.forEach(f=>{const e=$(`#${fid}-${f.k}`);if(e&&f.def!=null&&!['radio','checks','select'].includes(f.t))e.value=typeof f.def==='function'?f.def():f.def});PEND[fid]=[];drawPend(fid);fm.dispatchEvent(new Event('input'))}
+function bindForm(fid,fields,onSave,keep){bindFotos(fid);$('#'+fid).onsubmit=async e=>{e.preventDefault();if(!canSave())return;const r=readForm(fid,fields);if(r.err){toast(r.err,true);return}
+  const btn=$(`#${fid} button[type=submit]`),old=btn.textContent;btn.disabled=true;btn.textContent='Salvando…';
+  try{const ok=await onSave(r.v,PEND[fid]||[]);if(ok!==false){if(!keep)resetForm(fid,fields);else{PEND[fid]=[];drawPend(fid)}toast('Registrado por '+WHO()+'.')}}
+  catch(err){console.error(err);toast('Não foi possível salvar ('+(err.code||err.message||'erro')+').',true)}
+  finally{if(btn.isConnected){btn.disabled=false;btn.textContent=old}}}}
+async function addReg(tipo,data,fotosData,ids){const at=new Date().toISOString();const fotos=ids||(fotosData&&fotosData.length?await upFotos(fotosData,tipo):[]);const doc={tipo,dia:dKey(new Date(at)),at,por:WHO(),fotos};for(const k in data){if(data[k]!==undefined)doc[k]=data[k]}await FS.addDoc(FS.collection(db,'registros'),doc)}
+
+/* ---------- modal ---------- */
+function openModal(title,fields,onSave,btn,after){const fid='m'+uid();$('#mbody').innerHTML=`<h3>${esc(title)}</h3>`+formHTML(fid,fields,btn||'Salvar');$('#modal').hidden=false;bindForm(fid,fields,async(v,f)=>{const r=await onSave(v,f);if(r!==false)closeModal();return r},true);after&&after(fid);setTimeout(()=>{const x=$('#mbody input:not([type=file]),#mbody textarea');x&&x.focus()},50)}
+function closeModal(){$('#modal').hidden=true;$('#mbody').innerHTML=''}
+$('#mclose').onclick=closeModal;$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();$('#light').hidden=true}});
+
+/* ---------- registros ---------- */
+const TIPOS={temp:'Temperatura de equipamento',tempalim:'Temperatura de alimento',amostra:'Amostra',higiene:'Higienização',receb:'Recebimento',equipe:'Checagem da equipe',trein:'Treinamento',ocorr:'Ocorrência'};
+function desc(r){switch(r.tipo){
+  case 'temp':return{t:`${r.equipNome} · ${r.turno}`,d:`${fmtN(r.temp)} °C · limite ${r.lim}`,ok:r.conforme};
+  case 'tempalim':return{t:`${r.prep} · ${r.etapa}`,d:`${fmtN(r.temp)} °C · referência ${r.lim}`,ok:r.conforme};
+  case 'amostra':return{t:`${r.refeicao}: ${r.prep}`,d:`${r.qtd||'—'} g por preparação · coletada às ${r.hora}${r.tempArm!==''&&r.tempArm!=null?` · guardada a ${fmtN(r.tempArm)} °C`:''} · descartar a partir de ${fDT(r.descarteEm)}${r.descartada?` · DESCARTADA por ${r.descartada.por} em ${fDT(r.descartada.at)}`:''}`,ok:null};
+  case 'higiene':return{t:r.tarefa,d:`${r.area} · ${FREQ[r.freq]||r.freq}`,ok:true};
+  case 'receb':return{t:`${r.produto} · ${r.fornecedor}`,d:[r.nf&&'NF '+r.nf,r.categoria,r.temp!==''&&r.temp!=null?fmtN(r.temp)+' °C':'',r.validade&&'validade '+fD(r.validade),r.decisao].filter(Boolean).join(' · ')+(r.falhas&&r.falhas.length?' · Falhas: '+r.falhas.join('; '):''),ok:r.conforme};
+  case 'equipe':return{t:'Checagem da equipe',d:(r.presentes!==''&&r.presentes!=null?r.presentes+' presentes · ':'')+(r.nc&&r.nc.length?'Fora do padrão: '+r.nc.join('; '):'Todos os itens conformes')+(r.funcionarios?' · '+r.funcionarios:''),ok:r.conforme};
+  case 'trein':return{t:r.tema,d:[r.data&&fD(r.data),r.ministrante,r.ch!==''&&r.ch!=null&&r.ch+' h',r.participantes&&'Participantes: '+r.participantes].filter(Boolean).join(' · '),ok:null};
+  case 'ocorr':return{t:r.categoria,d:r.descricao,ok:null};
+  default:return{t:r.tipo,d:'',ok:null}}}
+const pill=ok=>ok===true?'<span class="pill ok">Conforme</span>':ok===false?'<span class="pill bad">Não conforme</span>':'';
+function regRow(r,o={}){const x=desc(r);return `<article class="reg${x.ok===false?' nc':''}"><div class="reg-h"><div class="reg-t">${o.tipo?`<span class="kind">${TIPOS[r.tipo]}</span>`:''}<strong>${esc(x.t)}</strong></div>${pill(x.ok)}</div><div class="reg-d">${esc(x.d)}</div>${r.acao?`<div class="reg-a"><b>Ação corretiva / orientação:</b> ${esc(r.acao)}</div>`:''}${r.obs?`<div class="reg-a">${esc(r.obs)}</div>`:''}${thumbs(r.fotos)}<div class="reg-m">${esc(r.por)} · ${fDT(r.at)}</div>${o.extra?o.extra(r):''}</article>`}
+function histByDay(list,o={}){if(!list.length)return `<p class="empty">${o.empty||'Nenhum registro nos últimos 8 dias.'}</p>`;const g={};list.forEach(r=>(g[r.dia]=g[r.dia]||[]).push(r));return Object.keys(g).sort().reverse().map(d=>`<h4 class="day">${d===TODAY()?'Hoje':fD(d)} <small>· ${plural(g[d].length,'registro','registros')}</small></h4><div class="regs">${g[d].map(r=>regRow(r,o)).join('')}</div>`).join('')}
+
+/* ---------- status ---------- */
+const turnoAtual=()=>new Date().getHours()<13?'Manhã':'Tarde';
+function tempStatus(){const tr=todayRegs('temp');return CFG.equip.map(e=>({e,m:tr.find(r=>r.equipId===e.id&&r.turno==='Manhã'),t:tr.find(r=>r.equipId===e.id&&r.turno==='Tarde')}))}
+function higStatus(task){const l=HIG[task.id];if(!l||!l.at)return{done:false,last:null,late:true};const days=diffDays(isoDay(l.at),TODAY());const lim=task.freq==='diaria'?0:task.freq==='semanal'?6:30;return{done:days<=lim,last:l,days}}
+function prazoStatus(p){const d=DOCS[p.id];if(!d||!d.validade)return{k:'none',t:'Sem registro'};const n=diffDays(TODAY(),d.validade);if(n<0)return{k:'bad',t:`Vencido há ${plural(-n,'dia','dias')}`};if(n<=30)return{k:'warn',t:n===0?'Vence hoje':`Vence em ${plural(n,'dia','dias')}`};return{k:'ok',t:`Em dia · vence em ${fD(d.validade)}`}}
+const amostrasAbertas=()=>REGS.filter(r=>r.tipo==='amostra'&&!r.descartada);
+const amostrasDescartar=()=>amostrasAbertas().filter(r=>r.descarteEm&&new Date(r.descarteEm)<=new Date());
+
+function pendencias(){
+  const P=[];const h=new Date().getHours();
+  tempStatus().forEach(s=>{if(!s.m)P.push({t:`Temperatura da manhã: ${s.e.nome}`,v:'temperaturas',bad:h>=12});if(!s.t&&h>=13)P.push({t:`Temperatura da tarde: ${s.e.nome}`,v:'temperaturas',bad:h>=17})});
+  todayRegs('temp').filter(r=>r.conforme===false).forEach(r=>P.push({t:`${r.equipNome} fora do limite (${fmtN(r.temp)} °C): acompanhar ação corretiva`,v:'temperaturas',bad:true}));
+  const am=todayRegs('amostra');CFG.refeicoes.forEach(rf=>{if(!am.some(r=>r.refeicao===rf))P.push({t:`Coletar amostra: ${rf}`,v:'amostras'})});
+  amostrasDescartar().forEach(r=>P.push({t:`Amostra pode ser descartada: ${r.refeicao} de ${fD(r.dia)}`,v:'amostras'}));
+  const hd=CFG.hig.filter(t=>t.freq==='diaria'&&!higStatus(t).done);if(hd.length)P.push({t:`Higienização diária: ${plural(hd.length,'tarefa pendente','tarefas pendentes')}`,v:'higienizacao',bad:h>=16});
+  const ha=CFG.hig.filter(t=>t.freq!=='diaria'&&!higStatus(t).done);if(ha.length===1)P.push({t:`Higienização ${FREQ[ha[0].freq].toLowerCase()} atrasada: ${ha[0].tarefa}`,v:'higienizacao',bad:true});else if(ha.length)P.push({t:`Higienização semanal/mensal: ${ha.length} tarefas em atraso ou nunca registradas`,v:'higienizacao',bad:true});
+  if(!todayRegs('equipe').length)P.push({t:'Checagem de higiene e conduta da equipe',v:'equipe'});
+  PRAZOS.forEach(p=>{const s=prazoStatus(p);if(s.k==='bad')P.push({t:`${p.nome}: ${s.t.toLowerCase()}`,v:'prazos',bad:true});else if(s.k==='warn')P.push({t:`${p.nome}: ${s.t.toLowerCase()}`,v:'prazos'});});const pn=PRAZOS.filter(p=>prazoStatus(p).k==='none');if(pn.length)P.push({t:`Prazos e controles: ${plural(pn.length,'item sem data registrada','itens sem data registrada')} (dedetização, filtro, caixa d'água…)`,v:'prazos'});
+  const risk=ITEMS.filter(i=>i[6]&&itemSt(i[0])!=='concluido');if(risk.length)P.push({t:`Relatório Revisa: ${plural(risk.length,'item de risco imediato aberto','itens de risco imediato abertos')}`,v:'revisa',bad:true});
+  return P.sort((a,b)=>(b.bad?1:0)-(a.bad?1:0));
+}
+
+/* ---------- views ---------- */
+const VIEWS={};let CUR='hoje';
+
+VIEWS.hoje={tab:'Hoje',title:'Painel do dia',
+  html:()=>`<p class="vs" id="h-date"></p><section class="tiles" id="h-tiles"></section>
+  <section class="card"><h3>O que falta fazer</h3><div id="h-pend"></div></section>
+  <section class="card"><h3>Temperaturas de hoje</h3><div class="tgrid" id="h-temp"></div></section>
+  <section class="card"><h3>Movimentação de hoje <small id="h-fc"></small></h3><div id="h-feed"></div></section>`,
+  refresh(){
+    $('#h-date').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    const ts=tempStatus(),tot=ts.length*2,feit=ts.reduce((a,s)=>a+(s.m?1:0)+(s.t?1:0),0);
+    const am=new Set(todayRegs('amostra').map(r=>r.refeicao)),amN=CFG.refeicoes.filter(r=>am.has(r)).length;
+    const hd=CFG.hig.filter(t=>t.freq==='diaria'),hdN=hd.filter(t=>higStatus(t).done).length;
+    const eq=todayRegs('equipe').length>0;
+    const done=ITEMS.filter(i=>itemSt(i[0])==='concluido').length,dl=diffDays(TODAY(),PRAZO_REVISA);
+    const pz=PRAZOS.map(prazoStatus),pzBad=pz.filter(s=>s.k==='bad').length,pzWarn=pz.filter(s=>s.k==='warn'||s.k==='none').length;
+    const cls=(a,b)=>a>=b?'ok':a>0?'warn':'bad';
+    $('#h-tiles').innerHTML=[
+      [`${feit}/${tot}`,'Temperaturas registradas','temperaturas',cls(feit,tot)],
+      [`${amN}/${CFG.refeicoes.length}`,'Amostras coletadas','amostras',cls(amN,CFG.refeicoes.length)],
+      [`${hdN}/${hd.length}`,'Higienização diária','higienizacao',cls(hdN,hd.length)],
+      [eq?'Feita':'Pendente','Checagem da equipe','equipe',eq?'ok':'warn'],
+      [`${done}/${ITEMS.length}`,`Revisa · ${dl<0?'prazo vencido':plural(dl,'dia restante','dias restantes')}`,'revisa',done===ITEMS.length?'ok':dl<=7?'bad':'warn'],
+      [pzBad?`${pzBad} vencido${pzBad>1?'s':''}`:pzWarn?`${pzWarn} a ver`:'Em dia','Prazos e controles','prazos',pzBad?'bad':pzWarn?'warn':'ok']
+    ].map(([b,s,v,c])=>`<a class="tile ${c}" href="#${v}"><b>${b}</b><span>${s}</span></a>`).join('');
+    const P=pendencias();
+    $('#h-pend').innerHTML=P.length?`<ul class="plist">${P.map(p=>`<li class="${p.bad?'bad':''}"><a href="#${p.v}">${esc(p.t)}</a></li>`).join('')}</ul>`:'<p class="allok">Tudo em dia hoje.</p>';
+    $('#h-temp').innerHTML=tempTable();
+    const F=feedToday();$('#h-fc').textContent=F.length?'· '+plural(F.length,'registro','registros'):'';
+    $('#h-feed').innerHTML=F.length?`<ul class="feed">${F.map(f=>`<li><time>${fT(f.at)}</time><div><b>${esc(f.k)}:</b> ${esc(f.t)} ${f.ok===false?'<span class="pill bad">Não conforme</span>':''}<div class="by">${esc(f.por)}</div></div></li>`).join('')}</ul>`:'<p class="empty">Nenhum registro hoje ainda. O primeiro registro feito em qualquer aba aparece aqui.</p>';
+  }};
+function tempTable(){const ts=tempStatus();const c=r=>r?`<td class="${r.conforme?'okc':'badc'}">${fmtN(r.temp)} °C<br><small>${esc(r.por.split(' ')[0])} ${fT(r.at)}</small></td>`:'<td class="mis">—</td>';
+  return `<table><thead><tr><th>Equipamento</th><th>Limite</th><th>Manhã</th><th>Tarde</th></tr></thead><tbody>${ts.map(s=>`<tr><td>${esc(s.e.nome)}</td><td>${limTxt(s.e.tipo)}</td>${c(s.m)}${c(s.t)}</tr>`).join('')}</tbody></table>`}
+function feedToday(){const L=[];todayRegs().forEach(r=>{const x=desc(r);L.push({at:r.at,por:r.por,k:TIPOS[r.tipo],t:x.t+(r.tipo==='temp'||r.tipo==='tempalim'?' · '+fmtN(r.temp)+' °C':''),ok:x.ok});if(r.descartada&&isoDay(r.descartada.at)===TODAY())L.push({at:r.descartada.at,por:r.descartada.por,k:'Amostra descartada',t:r.refeicao+' de '+fD(r.dia)})});
+  REGS.filter(r=>r.descartada&&r.dia!==TODAY()&&isoDay(r.descartada.at)===TODAY()).forEach(r=>L.push({at:r.descartada.at,por:r.descartada.por,k:'Amostra descartada',t:r.refeicao+' de '+fD(r.dia)}));
+  ITEMS.forEach(i=>{(ITENS[i[0]]?.hist||[]).forEach(h=>{if(isoDay(h.at)===TODAY())L.push({at:h.at,por:h.por,k:'Relatório Revisa',t:`${h.o} · ${i[2]}`})})});
+  PRAZOS.forEach(p=>{(DOCS[p.id]?.hist||[]).forEach(h=>{if(isoDay(h.at)===TODAY())L.push({at:h.at,por:h.por,k:'Prazos',t:`${p.nome} · ${h.o}`})})});
+  return L.sort((a,b)=>b.at.localeCompare(a.at))}
+
+/* temperaturas */
+const fTemp=()=>[
+  {k:'equip',l:'Equipamento',t:'select',o:CFG.equip.map(e=>({v:e.id,t:`${e.nome} (${limTxt(e.tipo)})`})),req:true},
+  {k:'turno',l:'Turno',t:'radio',o:['Manhã','Tarde'],def:turnoAtual,req:true},
+  {k:'temp',l:'Temperatura medida (°C)',t:'number',req:true,ph:'Ex.: -18',help:''},
+  {k:'acao',l:'Ação corretiva (obrigatória se estiver fora do limite)',t:'textarea',ph:'Ex.: porta estava aberta; fechada e nova medição em 30 min'}];
+const fAlim=()=>[
+  {k:'prep',l:'Preparação',req:true,ph:'Ex.: frango assado'},
+  {k:'etapa',l:'Etapa',t:'select',o:ETAPAS.map(e=>({v:e.k,t:`${e.k} (${etTxt(e)})`})),req:true},
+  {k:'temp',l:'Temperatura medida (°C)',t:'number',req:true,help:''},
+  {k:'acao',l:'Ação corretiva (obrigatória se estiver fora da referência)',t:'textarea'}];
+VIEWS.temperaturas={tab:'Temperaturas',title:'Temperaturas',sub:'Registre duas vezes ao dia cada equipamento de frio, e a temperatura dos alimentos na cocção e na distribuição.',
+  html:()=>`<section class="card"><h3>Equipamentos de hoje</h3><div class="tgrid" id="t-grid"></div></section>
+  <section class="card"><h3>Registrar equipamento</h3>${formHTML('ft',fTemp(),'Registrar temperatura')}</section>
+  <section class="card"><h3>Registrar temperatura de alimento</h3><p class="ref">Referências usuais: cocção ≥ 70 °C no centro; distribuição quente ≥ 60 °C; distribuição fria ≤ 10 °C; resfriamento de 60 °C para 10 °C em até 2 horas. Ajuste conforme o Manual de Boas Práticas.</p>${formHTML('fa',fAlim(),'Registrar temperatura do alimento')}</section>
+  <section class="card"><h3>Histórico (8 dias)</h3><div id="t-hist"></div></section>`,
+  bind(){
+    const ft=fTemp(),fa=fAlim();
+    const live=()=>{const e=CFG.equip.find(x=>x.id===$('#ft-equip').value),v=$('#ft-temp').value,h=$('#ft-temp-h');if(!e||v===''){h.textContent=e?`Limite: ${limTxt(e.tipo)}`:'';h.className='help';return}const ok=confEquip(e.tipo,Number(v.replace(',','.')));h.textContent=ok?`Dentro do limite (${limTxt(e.tipo)})`:`Fora do limite (${limTxt(e.tipo)}): descreva a ação corretiva`;h.className='help '+(ok?'ok':'bad')};
+    $('#ft').addEventListener('input',live);$('#ft').addEventListener('change',live);live();
+    bindForm('ft',ft,async(v,f)=>{const e=CFG.equip.find(x=>x.id===v.equip);const ok=confEquip(e.tipo,v.temp);if(!ok&&!v.acao){toast('Temperatura fora do limite: descreva a ação corretiva.',true);return false}
+      await addReg('temp',{equipId:e.id,equipNome:e.nome,equipTipo:e.tipo,turno:v.turno,temp:v.temp,lim:limTxt(e.tipo),conforme:ok,acao:v.acao},f)});
+    const liveA=()=>{const e=ETAPAS.find(x=>x.k===$('#fa-etapa').value),v=$('#fa-temp').value,h=$('#fa-temp-h');if(v===''){h.textContent=`Referência: ${etTxt(e)}`;h.className='help';return}const n=Number(v.replace(',','.')),ok=e.op==='>='?n>=e.v:n<=e.v;h.textContent=ok?'Dentro da referência':'Fora da referência: descreva a ação corretiva';h.className='help '+(ok?'ok':'bad')};
+    $('#fa').addEventListener('input',liveA);$('#fa').addEventListener('change',liveA);liveA();
+    bindForm('fa',fa,async(v,f)=>{const e=ETAPAS.find(x=>x.k===v.etapa);const ok=e.op==='>='?v.temp>=e.v:v.temp<=e.v;if(!ok&&!v.acao){toast('Fora da referência: descreva a ação corretiva.',true);return false}
+      await addReg('tempalim',{prep:v.prep,etapa:v.etapa,temp:v.temp,lim:etTxt(e),conforme:ok,acao:v.acao},f)});
+  },
+  refresh(){$('#t-grid').innerHTML=tempTable();$('#t-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='temp'||r.tipo==='tempalim'),{tipo:true})}};
+
+/* amostras */
+const fAm=()=>[
+  {k:'refeicao',l:'Refeição',t:'select',o:CFG.refeicoes,req:true},
+  {k:'prep',l:'Preparações coletadas',req:true,ph:'Ex.: arroz, feijão, frango assado, salada',full:true},
+  {k:'qtd',l:'Quantidade por preparação (g)',t:'number',def:100},
+  {k:'hora',l:'Hora da coleta',t:'time',def:nowHM,req:true},
+  {k:'tempArm',l:'Temperatura de guarda (°C)',t:'number',ph:'Ex.: 3'},
+  {k:'obs',l:'Observações',t:'textarea',ph:'Ex.: amostras identificadas e guardadas na geladeira 1'}];
+VIEWS.amostras={tab:'Amostras',title:'Amostras',sub:'Colete uma amostra de cada preparação servida, em embalagem descartável identificada (preparação, data e hora), e guarde sob refrigeração pelo prazo definido no Manual de Boas Práticas.',
+  html:()=>`<section class="card"><h3>Para descartar</h3><div id="a-desc"></div></section>
+  <section class="card"><h3>Registrar coleta</h3><p class="ref" id="a-ref"></p>${formHTML('fam',fAm(),'Registrar amostra')}</section>
+  <section class="card"><h3>Em guarda</h3><div id="a-guarda" class="regs"></div></section>
+  <section class="card"><h3>Histórico (8 dias)</h3><div id="a-hist"></div></section>`,
+  bind(){$('#a-ref').textContent=`Prazo de guarda configurado: ${CFG.lim.amostraH} horas. Uma amostra de cerca de 100 g por preparação.`;
+    bindForm('fam',fAm(),async(v,f)=>{const[hh,mm]=v.hora.split(':').map(Number);const c=new Date();c.setHours(hh,mm,0,0);const de=new Date(c.getTime()+CFG.lim.amostraH*36e5).toISOString();
+      await addReg('amostra',{refeicao:v.refeicao,prep:v.prep,qtd:v.qtd,hora:v.hora,tempArm:v.tempArm,obs:v.obs,descarteEm:de},f)})},
+  refresh(){
+    const btn=r=>!r.descartada?`<div class="rowbtns"><button class="btn sm" data-desc="${r.id}" type="button">Registrar descarte</button></div>`:'';
+    const d=amostrasDescartar();$('#a-desc').innerHTML=d.length?`<div class="regs">${d.map(r=>regRow(r,{extra:btn})).join('')}</div>`:'<p class="empty">Nenhuma amostra com prazo de guarda vencido.</p>';
+    const g=amostrasAbertas().filter(r=>!d.includes(r));$('#a-guarda').innerHTML=g.length?g.map(r=>regRow(r)).join(''):'<p class="empty">Nenhuma amostra em guarda.</p>';
+    $('#a-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='amostra'));
+    $$('[data-desc]').forEach(b=>b.onclick=async()=>{if(!canSave())return;b.disabled=true;try{await FS.updateDoc(FS.doc(db,'registros',b.dataset.desc),{descartada:{at:new Date().toISOString(),por:WHO()}});toast('Descarte registrado.')}catch(e){b.disabled=false;toast('Não foi possível registrar o descarte.',true)}})}};
+
+/* higienização */
+VIEWS.higienizacao={tab:'Higienização',title:'Higienização',sub:'Cada tarefa registrada guarda quem fez e quando. As tarefas diárias zeram a cada dia; as semanais e mensais avisam quando atrasam.',
+  html:()=>`<section class="card"><h3>Registrar várias tarefas diárias de uma vez</h3><div id="hl-wrap"></div></section>
+  <section class="card"><h3>Diárias</h3><div id="hg-diaria"></div></section>
+  <section class="card"><h3>Semanais</h3><div id="hg-semanal"></div></section>
+  <section class="card"><h3>Mensais</h3><div id="hg-mensal"></div></section>
+  <section class="card"><h3>Histórico (8 dias)</h3><div id="hg-hist"></div></section>`,
+  bind(){this.drawLote()},
+  drawLote(){const pend=CFG.hig.filter(t=>t.freq==='diaria'&&!higStatus(t).done);
+    if(!pend.length){$('#hl-wrap').innerHTML='<p class="allok">Todas as tarefas diárias de hoje já foram registradas.</p>';return}
+    const fl=[{k:'tarefas',l:'Marque o que foi feito',t:'checks',o:pend.map(t=>`${t.area} · ${t.tarefa}`)},{k:'obs',l:'Observações',t:'textarea'}];
+    $('#hl-wrap').innerHTML=formHTML('fhl',fl,'Registrar tarefas marcadas');
+    bindForm('fhl',fl,async(v,f)=>{if(!v.tarefas.length){toast('Marque pelo menos uma tarefa.',true);return false}
+      const ids=f.length?await upFotos(f,'higiene'):[];const at=new Date().toISOString(),st={};
+      for(const lbl of v.tarefas){const t=pend.find(x=>`${x.area} · ${x.tarefa}`===lbl);await addReg('higiene',{taskId:t.id,tarefa:t.tarefa,area:t.area,freq:t.freq,obs:v.obs},null,ids);st[t.id]={at,por:WHO()}}
+      await FS.setDoc(FS.doc(db,'status','higiene'),st,{merge:true});setTimeout(()=>this.drawLote(),300)})},
+  refresh(){['diaria','semanal','mensal'].forEach(fq=>{const el=$('#hg-'+fq);const ts=CFG.hig.filter(t=>t.freq===fq);
+    el.innerHTML=ts.length?ts.map(t=>{const s=higStatus(t);const p=s.done?(fq==='diaria'?'<span class="pill ok">Feita hoje</span>':'<span class="pill ok">Em dia</span>'):(fq==='diaria'?'<span class="pill warn">Pendente</span>':'<span class="pill bad">Atrasada</span>');
+      return `<div class="task"><div><div class="tt">${esc(t.tarefa)}</div><div class="tm">${esc(t.area)}${s.last?` · última: ${esc(s.last.por)} em ${fDT(s.last.at)}`:' · nunca registrada'}</div></div><div class="ta">${p}<button class="btn sm" data-hig="${t.id}" type="button">Registrar</button></div></div>`}).join(''):'<p class="empty">Nenhuma tarefa nesta frequência. Adicione em Ajustes.</p>'});
+    $('#hg-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='higiene'));
+    $$('[data-hig]').forEach(b=>b.onclick=()=>{const t=CFG.hig.find(x=>x.id===b.dataset.hig);
+      openModal(t.tarefa,[{k:'obs',l:'Observações',t:'textarea',ph:'Produto usado, o que foi encontrado…'}],async(v,f)=>{await addReg('higiene',{taskId:t.id,tarefa:t.tarefa,area:t.area,freq:t.freq,obs:v.obs},f);await FS.setDoc(FS.doc(db,'status','higiene'),{[t.id]:{at:new Date().toISOString(),por:WHO()}},{merge:true});setTimeout(()=>CUR==='higienizacao'&&this.drawLote(),300)},'Registrar higienização')})}};
+
+/* recebimento */
+const CONF_REC=['Embalagem íntegra, sem amassados ou furos','Rótulo completo (produto, lote, validade, SIF/registro)','Características normais (cor, odor, textura)','Veículo do fornecedor limpo e refrigerado quando necessário','Entregador com uniforme adequado'];
+const fRec=()=>[
+  {k:'fornecedor',l:'Fornecedor',req:true},{k:'produto',l:'Produto',req:true},{k:'nf',l:'Nota fiscal'},
+  {k:'categoria',l:'Tipo',t:'select',o:['Congelado','Resfriado','Seco / ambiente','Hortifrúti']},
+  {k:'temp',l:'Temperatura no recebimento (°C)',t:'number',help:''},{k:'validade',l:'Validade',t:'date'},
+  {k:'conf',l:'Conferência (desmarque o que estiver fora do padrão)',t:'checks',o:CONF_REC,all:true},
+  {k:'decisao',l:'Decisão',t:'radio',o:['Aceito','Aceito com ressalva','Recusado'],def:'Aceito',full:true},
+  {k:'acao',l:'Observação / ação tomada',t:'textarea',ph:'Ex.: devolvido ao fornecedor; comunicado ao comprador'}];
+VIEWS.recebimento={tab:'Recebimento',title:'Recebimento de mercadorias',sub:'Confira cada entrega antes de guardar. Registros fora do padrão ficam marcados como não conformes.',
+  html:()=>`<section class="card"><h3>Registrar entrega</h3><p class="ref" id="r-ref"></p>${formHTML('frc',fRec(),'Registrar recebimento')}</section><section class="card"><h3>Histórico (8 dias)</h3><div id="r-hist"></div></section>`,
+  bind(){$('#r-ref').textContent=`Referências configuradas: congelados até ${CFG.lim.recCong} °C; resfriados até ${CFG.lim.recRes} °C. Ajuste em Ajustes conforme o Manual de Boas Práticas.`;
+    bindForm('frc',fRec(),async(v,f)=>{const falhas=CONF_REC.filter(x=>!v.conf.includes(x));
+      if(v.temp!==''){if(v.categoria==='Congelado'&&v.temp>CFG.lim.recCong)falhas.push(`temperatura acima de ${CFG.lim.recCong} °C`);if(v.categoria==='Resfriado'&&v.temp>CFG.lim.recRes)falhas.push(`temperatura acima de ${CFG.lim.recRes} °C`)}
+      if(v.validade&&v.validade<TODAY())falhas.push('produto vencido');
+      if(falhas.length&&!v.acao){toast('Há itens fora do padrão: descreva a ação tomada.',true);return false}
+      await addReg('receb',{fornecedor:v.fornecedor,produto:v.produto,nf:v.nf,categoria:v.categoria,temp:v.temp,validade:v.validade,decisao:v.decisao,falhas,conforme:!falhas.length,acao:v.acao},f)})},
+  refresh(){$('#r-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='receb'))}};
+
+/* equipe */
+const CONF_EQ=['Uniforme limpo e completo','Touca cobrindo todo o cabelo','Sem adornos (anel, aliança, brinco, relógio, pulseira, piercing)','Barba feita / sem bigode','Unhas curtas, limpas e sem esmalte','Sem sintomas (febre, diarreia, vômito, feridas nas mãos)','Bota ou calçado fechado limpo, guardado no lugar certo','Lavagem correta das mãos observada','Roupas e objetos pessoais guardados nos armários (fora do sanitário)'];
+const fEq=()=>[
+  {k:'conf',l:'Desmarque o que estiver fora do padrão',t:'checks',o:CONF_EQ,all:true},
+  {k:'presentes',l:'Funcionários presentes',t:'number'},{k:'funcionarios',l:'Quem estava fora do padrão',ph:'Nomes'},
+  {k:'acao',l:'Orientação dada / ação corretiva',t:'textarea',ph:'Ex.: orientado a fazer a barba; assinou termo de ciência'}];
+VIEWS.equipe={tab:'Equipe',title:'Higiene e conduta da equipe',sub:'Checagem diária no início do turno. Quando houver orientação, registre e, se possível, anexe foto do termo de ciência assinado.',
+  html:()=>`<section class="card"><h3>Checagem de hoje</h3><div id="e-hoje"></div>${formHTML('feq',fEq(),'Registrar checagem')}</section><section class="card"><h3>Histórico (8 dias)</h3><div id="e-hist"></div></section>`,
+  bind(){bindForm('feq',fEq(),async(v,f)=>{const nc=CONF_EQ.filter(x=>!v.conf.includes(x));if(nc.length&&!v.acao){toast('Há itens fora do padrão: descreva a orientação dada.',true);return false}
+    await addReg('equipe',{nc,conforme:!nc.length,presentes:v.presentes,funcionarios:v.funcionarios,acao:v.acao},f)})},
+  refresh(){const t=todayRegs('equipe');$('#e-hoje').innerHTML=t.length?`<p class="allok">Checagem feita hoje por ${esc(t[0].por)} às ${fT(t[0].at)}.</p>`:'<p class="empty">Ainda não feita hoje.</p>';$('#e-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='equipe'))}};
+
+/* treinamentos */
+const fTr=()=>[
+  {k:'tema',l:'Tema',req:true,list:['Boas práticas de manipulação de alimentos','Higiene pessoal e conduta','Higienização de instalações, equipamentos e utensílios (POP)','Controle de temperatura','Recebimento e armazenamento','Controle integrado de pragas','Coleta e guarda de amostras','Rotulagem e etiquetagem de alimentos']},
+  {k:'data',l:'Data',t:'date',def:TODAY},{k:'ch',l:'Carga horária (h)',t:'number'},{k:'ministrante',l:'Ministrante'},
+  {k:'participantes',l:'Participantes',t:'textarea',req:true,ph:'Nomes, um por linha ou separados por vírgula'},
+  {k:'obs',l:'Observações',t:'textarea',ph:'Anexe foto da lista de presença assinada'}];
+VIEWS.treinamentos={tab:'Treinamentos',title:'Treinamentos',sub:'Comprova a capacitação exigida no relatório. Anexe foto da lista de presença e dos certificados.',
+  html:()=>`<section class="card"><h3>Registrar treinamento</h3>${formHTML('ftr',fTr(),'Registrar treinamento')}</section><section class="card"><h3>Treinamentos registrados</h3><div id="tr-hist"></div></section>`,
+  bind(){bindForm('ftr',fTr(),async(v,f)=>{await addReg('trein',v,f)})},
+  refresh(){$('#tr-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='trein'),{empty:'Nenhum treinamento nos últimos 8 dias. Os anteriores aparecem em Exportar.'})}};
+
+/* ocorrências */
+const fOc=()=>[
+  {k:'categoria',l:'Tipo',t:'select',o:['Pragas / vetores','Equipamento com defeito','Estrutura / manutenção','Falta de água ou energia','Fornecedor / produto','Alimento descartado','Conduta de funcionário','Visita da vigilância sanitária','Outros']},
+  {k:'descricao',l:'O que aconteceu',t:'textarea',req:true},{k:'acao',l:'Ação tomada',t:'textarea'}];
+VIEWS.ocorrencias={tab:'Ocorrências',title:'Ocorrências',sub:'Diário de tudo que fugiu da rotina: problema encontrado, o que foi feito e foto.',
+  html:()=>`<section class="card"><h3>Registrar ocorrência</h3>${formHTML('foc',fOc(),'Registrar ocorrência')}</section><section class="card"><h3>Histórico (8 dias)</h3><div id="oc-hist"></div></section>`,
+  bind(){bindForm('foc',fOc(),async(v,f)=>{await addReg('ocorr',v,f)})},
+  refresh(){$('#oc-hist').innerHTML=histByDay(REGS.filter(r=>r.tipo==='ocorr'))}};
+
+/* relatório revisa */
+let RV={owner:'rt',filt:'open'};
+VIEWS.revisa={tab:'Relatório Revisa',title:'Relatório da Revisa',sub:'Inspeção de 06/11/2026 · prazo de 30 dias até 09/12/2026. Toque no círculo para mudar o status e anexe fotos de antes e depois como comprovação.',
+  html:()=>`<div class="chips" id="rv-own"></div><div class="chips" id="rv-f"></div><div id="rv-list" style="display:flex;flex-direction:column;gap:12px"></div>`,
+  bind(){
+    const own=[['','Todos'],...Object.entries(OWN).map(([k,o])=>[k,o.n])];
+    $('#rv-own').innerHTML=own.map(([k,n])=>`<button class="chip" data-o="${k}" aria-pressed="${RV.owner===k}" type="button">${n}</button>`).join('');
+    $('#rv-f').innerHTML=[['all','Todos'],['open','Em aberto'],['risk','Risco imediato'],['done','Concluídos']].map(([k,n])=>`<button class="chip" data-f="${k}" aria-pressed="${RV.filt===k}" type="button">${n}</button>`).join('');
+    $$('[data-o]').forEach(b=>b.onclick=()=>{RV.owner=b.dataset.o;$$('[data-o]').forEach(x=>x.setAttribute('aria-pressed',x===b));this.refresh(true)});
+    $$('[data-f]').forEach(b=>b.onclick=()=>{RV.filt=b.dataset.f;$$('[data-f]').forEach(x=>x.setAttribute('aria-pressed',x===b));this.refresh(true)});
+  },
+  refresh(force){
+    const a=document.activeElement;if(!force&&a&&a.tagName==='TEXTAREA'&&$('#rv-list').contains(a))return;
+    const open=new Set($$('#rv-list details[open]').map(d=>d.dataset.id));
+    const its=ITEMS.filter(i=>{if(RV.owner&&i[4]!==RV.owner)return false;const s=itemSt(i[0]);if(RV.filt==='open')return s!=='concluido';if(RV.filt==='done')return s==='concluido';if(RV.filt==='risk')return i[6]&&s!=='concluido';return true});
+    const done=ITEMS.filter(i=>(!RV.owner||i[4]===RV.owner)&&itemSt(i[0])==='concluido').length,tot=ITEMS.filter(i=>!RV.owner||i[4]===RV.owner).length;
+    let h=`<p class="vs" style="margin:0">${done} de ${tot} concluídos${RV.owner?' para '+OWN[RV.owner].n:''}.</p>`;
+    if(!its.length)h+='<p class="empty">Nenhum item neste filtro.</p>';
+    AREAS.forEach(ar=>{const g=its.filter(i=>i[1]===ar);if(!g.length)return;const all=ITEMS.filter(i=>i[1]===ar),dn=all.filter(i=>itemSt(i[0])==='concluido').length;
+      h+=`<section class="area"><h4>${esc(ar)}<small>${dn}/${all.length}</small></h4>${g.map(i=>{const[id,,find,act,ow,apoio,risk]=i,s=itemSt(id),r=ITENS[id]||{};
+        return `<div class="item${s==='concluido'?' done':''}"><button class="st" data-st="${id}" data-s="${s}" type="button" aria-label="Status: ${STL[s]}. Tocar para mudar">${s==='concluido'?'✓':''}</button>
+        <div class="itx"><div class="find">${esc(find)}</div><div class="act">${esc(act)}</div>
+        <div class="tags"><span class="tag ${OWN[ow].cls}">${OWN[ow].n}</span>${risk?'<span class="tag risk">Risco imediato</span>':''}<span>${STL[s]}${r.por?` · ${esc(r.por)} em ${fD(isoDay(r.at))}`:''}</span></div>
+        ${apoio?`<div class="act">Apoio: ${esc(apoio)}</div>`:''}${thumbs(r.fotos)}
+        <details data-id="${id}"${open.has(id)?' open':''}><summary>Anotar, anexar foto e ver histórico</summary>
+        <textarea id="obs-${id}" placeholder="O que foi feito, data, quem executou">${esc(r.obs||'')}</textarea>
+        <div class="rowbtns" style="margin-top:6px"><button class="btn sm" data-sv="${id}" type="button">Salvar anotação</button><label class="fotobtn" for="fi-${id}">+ Foto</label><input type="file" id="fi-${id}" data-fi="${id}" accept="image/*" multiple hidden></div>
+        ${(r.hist||[]).length?`<ol class="hist">${r.hist.slice().reverse().map(x=>`<li>${fDT(x.at)} · ${esc(x.por)} · ${esc(x.o)}</li>`).join('')}</ol>`:''}</details></div></div>`}).join('')}</section>`});
+    $('#rv-list').innerHTML=h;hydrate($('#rv-list'));
+    $$('[data-st]').forEach(b=>b.onclick=()=>{if(!canSave())return;const id=b.dataset.st,s=NEXT[itemSt(id)];saveItem(id,{s},'Marcou '+STL[s].toLowerCase())});
+    $$('[data-sv]').forEach(b=>b.onclick=()=>{if(!canSave())return;const id=b.dataset.sv;saveItem(id,{obs:$('#obs-'+id).value.trim()},'Anotou')});
+    $$('[data-fi]').forEach(inp=>inp.onchange=async()=>{if(!canSave()){inp.value='';return}const id=inp.dataset.fi,L=[];for(const f of inp.files){try{L.push(await compress(f))}catch(e){}}inp.value='';if(!L.length)return;toast('Enviando foto…');const ids=await upFotos(L,'revisa-'+id);saveItem(id,{addFotos:ids},`Anexou ${plural(ids.length,'foto','fotos')}`)});
+  }};
+async function saveItem(id,ch,o){const p=ITENS[id]||{};const at=new Date().toISOString();
+  const d={s:ch.s||p.s||'pendente',obs:ch.obs!=null?ch.obs:(p.obs||''),at,por:WHO(),hist:[...(p.hist||[]),{o,por:WHO(),at}].slice(-30),fotos:[...(p.fotos||[]),...(ch.addFotos||[])].slice(-20)};
+  try{await FS.setDoc(FS.doc(db,'itens',id),d);toast(o+'.')}catch(e){toast('Não foi possível salvar ('+(e.code||'erro')+').',true)}}
+
+/* prazos */
+VIEWS.prazos={tab:'Prazos',title:'Prazos e controles',sub:'Dedetização, filtro, caixa d\'água, laudos e documentos com vencimento. Atualize sempre que o serviço for feito e anexe foto do certificado ou comprovante.',
+  html:()=>`<section class="tiles" id="pz-tiles"></section><div id="pz-list" style="display:flex;flex-direction:column;gap:12px"></div>`,
+  refresh(){
+    const S=PRAZOS.map(prazoStatus),c=k=>S.filter(s=>s.k===k).length;
+    $('#pz-tiles').innerHTML=`<div class="tile bad"><b>${c('bad')}</b><span>Vencidos</span></div><div class="tile warn"><b>${c('warn')}</b><span>Vencem em até 30 dias</span></div><div class="tile ${c('none')?'warn':'ok'}"><b>${c('none')}</b><span>Sem registro</span></div>`;
+    const groups=[...new Set(PRAZOS.map(p=>p.g))];
+    $('#pz-list').innerHTML=groups.map(g=>`<section class="card"><h3>${esc(g)}</h3>${PRAZOS.filter(p=>p.g===g).map(p=>{const d=DOCS[p.id]||{},s=prazoStatus(p);
+      return `<div class="doc"><div class="doc-h"><div><strong>${esc(p.nome)}</strong><span class="meta">Periodicidade: ${p.m} meses${p.o?' · '+esc(p.o):''}</span></div><span class="pill ${s.k}">${esc(s.t)}</span></div>
+      ${d.realizado?`<div class="meta">Último: ${fD(d.realizado)} · vence ${fD(d.validade)}${d.empresa?' · '+esc(d.empresa):''} · registrado por ${esc(d.por)}</div>`:''}${d.obs?`<div class="reg-a">${esc(d.obs)}</div>`:''}${thumbs(d.fotos)}
+      <div class="rowbtns"><button class="btn sm primary" data-pz="${p.id}" type="button">Registrar realização</button></div>
+      ${(d.hist||[]).length?`<details><summary>Histórico</summary><ol class="hist">${d.hist.slice().reverse().map(x=>`<li>${fDT(x.at)} · ${esc(x.por)} · ${esc(x.o)}</li>`).join('')}</ol></details>`:''}</div>`}).join('')}</section>`).join('');
+    $$('[data-pz]').forEach(b=>b.onclick=()=>{const p=PRAZOS.find(x=>x.id===b.dataset.pz),d=DOCS[p.id]||{};
+      openModal(p.nome,[{k:'realizado',l:'Data em que foi feito',t:'date',def:TODAY,req:true},{k:'validade',l:'Vence em',t:'date',def:()=>addMonths(TODAY(),p.m),req:true,help:`Sugestão: ${p.m} meses após a realização. Use a validade do certificado, se houver.`},{k:'empresa',l:'Empresa / responsável',def:d.empresa||''},{k:'obs',l:'Observações',t:'textarea',ph:'Nº do certificado, produtos usados, valor…'}],
+        async(v,f)=>{if(v.validade<v.realizado){toast('A data de vencimento é anterior à realização.',true);return false}const ids=f.length?await upFotos(f,'prazo-'+p.id):[];const at=new Date().toISOString();
+          await FS.setDoc(FS.doc(db,'docs',p.id),{realizado:v.realizado,validade:v.validade,empresa:v.empresa,obs:v.obs,at,por:WHO(),fotos:[...(d.fotos||[]),...ids].slice(-20),hist:[...(d.hist||[]),{o:`Realizado em ${fD(v.realizado)}, vence em ${fD(v.validade)}${ids.length?' · '+plural(ids.length,'foto','fotos'):''}`,por:WHO(),at}].slice(-30)})},'Salvar',
+        fid=>{$('#'+fid+'-realizado').addEventListener('change',e=>{if(e.target.value)$('#'+fid+'-validade').value=addMonths(e.target.value,p.m)})})})}};
+
+/* exportar */
+const SECOES=[['temp','Temperaturas de equipamentos'],['tempalim','Temperaturas de alimentos'],['amostra','Amostras'],['higiene','Higienização'],['receb','Recebimento'],['equipe','Checagem da equipe'],['trein','Treinamentos'],['ocorr','Ocorrências'],['revisa','Relatório da Revisa (situação atual)'],['prazos','Prazos e controles (situação atual)']];
+VIEWS.exportar={tab:'Exportar',title:'Relatório para comprovação',sub:'Gere o relatório de um dia ou de um período, com ou sem fotos, e salve em PDF pelo botão de imprimir.',
+  html:()=>`<section class="card noprint"><div class="fgrid">
+    <div class="field"><label class="lbl" for="ex-de">De</label><input type="date" id="ex-de"></div><div class="field"><label class="lbl" for="ex-ate">Até</label><input type="date" id="ex-ate"></div>
+    <fieldset class="field full checks" id="ex-sec"><legend class="lbl">Incluir</legend>${SECOES.map(([k,n])=>`<label class="chk"><input type="checkbox" value="${k}" checked><span>${n}</span></label>`).join('')}</fieldset>
+    <label class="chk field full"><input type="checkbox" id="ex-fotos" checked><span>Incluir fotos</span></label></div>
+    <div class="factions"><button class="btn primary" id="ex-go" type="button">Gerar relatório</button><button class="btn" id="ex-print" type="button" hidden>Imprimir / salvar PDF</button></div></section>
+    <div id="ex-out"></div>`,
+  bind(){$('#ex-de').value=TODAY();$('#ex-ate').value=TODAY();$('#ex-print').onclick=()=>window.print();
+    $('#ex-go').onclick=async()=>{if(!online){toast('Sem conexão com o servidor.',true);return}const de=$('#ex-de').value,ate=$('#ex-ate').value;if(!de||!ate||ate<de){toast('Confira as datas.',true);return}
+      const sec=$$('#ex-sec input:checked').map(i=>i.value),wf=$('#ex-fotos').checked,b=$('#ex-go');b.disabled=true;b.textContent='Gerando…';$('#ex-print').hidden=true;
+      try{const s=await FS.getDocs(FS.query(FS.collection(db,'registros'),FS.where('dia','>=',de),FS.where('dia','<=',ate)));const R=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>a.at.localeCompare(b.at));
+        $('#ex-out').innerHTML=buildReport(R,de,ate,sec,wf);await hydrate($('#ex-out'));$('#ex-print').hidden=false;$('#ex-out').scrollIntoView({behavior:'smooth'})}
+      catch(e){console.error(e);toast('Não foi possível gerar ('+(e.code||'erro')+').',true)}finally{b.disabled=false;b.textContent='Gerar relatório'}}}};
+function buildReport(R,de,ate,sec,wf){
+  const per=de===ate?fD(de):`${fD(de)} a ${fD(ate)}`;
+  let h=`<article class="report"><div><h2>Fortal Comércio de Alimentos LTDA — Controle sanitário</h2><div>Rua Comandante Poty, 33, loja A, 18 do Forte, Aracaju/SE · Período: ${per} · Gerado em ${fDT(new Date().toISOString())}${WHO()?' por '+esc(WHO()):''}</div></div>`;
+  const tb=(cols,rows)=>`<div class="tgrid"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;
+  SECOES.forEach(([k,n])=>{if(!sec.includes(k))return;
+    if(k==='revisa'){const rows=ITEMS.map(i=>{const r=ITENS[i[0]]||{};return `<tr><td>${esc(i[1])}</td><td>${esc(i[2])}</td><td>${OWN[i[4]].n}</td><td>${STL[itemSt(i[0])]}</td><td>${r.por?esc(r.por)+'<br>'+fDT(r.at):'—'}</td><td>${esc(r.obs||'')}${wf?thumbs(r.fotos):''}</td></tr>`});
+      const dn=ITEMS.filter(i=>itemSt(i[0])==='concluido').length;h+=`<h3>${n} — ${dn} de ${ITEMS.length} concluídos</h3>`+tb(['Área','Constatação','Responsável','Status','Último registro','Anotação'],rows);return}
+    if(k==='prazos'){h+=`<h3>${n}</h3>`+tb(['Controle','Situação','Realizado','Vence','Registrado por','Obs.'],PRAZOS.map(p=>{const d=DOCS[p.id]||{};return `<tr><td>${esc(p.nome)}</td><td>${prazoStatus(p).t}</td><td>${fD(d.realizado)}</td><td>${fD(d.validade)}</td><td>${esc(d.por||'—')}</td><td>${esc([d.empresa,d.obs].filter(Boolean).join(' · '))}${wf?thumbs(d.fotos):''}</td></tr>`}));return}
+    const L=R.filter(r=>r.tipo===k);const nc=L.filter(r=>desc(r).ok===false).length;
+    h+=`<h3>${n} — ${plural(L.length,'registro','registros')}${nc?` · ${nc} não conforme${nc>1?'s':''}`:''}</h3>`;
+    if(!L.length){h+='<p>Nenhum registro no período.</p>';return}
+    h+=tb(['Data e hora','Registro','Detalhes','Situação','Responsável'],L.map(r=>{const x=desc(r);return `<tr><td>${fDT(r.at)}</td><td>${esc(x.t)}</td><td>${esc(x.d)}${r.acao?'<br><b>Ação:</b> '+esc(r.acao):''}${r.obs?'<br>'+esc(r.obs):''}${wf?thumbs(r.fotos):''}</td><td>${x.ok===true?'Conforme':x.ok===false?'<b>Não conforme</b>':'—'}</td><td>${esc(r.por)}</td></tr>`}))});
+  h+=`<div class="sign"><div>Nutricionista Responsável Técnica<br>CRN: __________</div><div>Responsável legal / Gestão</div></div></article>`;return h}
+
+/* ajustes */
+let WC=null;
+VIEWS.ajustes={tab:'Ajustes',title:'Ajustes',sub:'Equipamentos, refeições, limites de temperatura e tarefas de higienização. As mudanças valem para todos que usam o sistema.',
+  html:()=>`<section class="card"><h3>Equipamentos de frio e quente</h3><div id="aj-eq"></div><div class="rowbtns"><button class="btn sm" id="aj-addeq" type="button">+ Equipamento</button></div></section>
+  <section class="card"><h3>Refeições servidas</h3><div class="field"><label class="lbl" for="aj-ref">Uma por linha (cada uma pede uma coleta de amostra por dia)</label><textarea id="aj-ref" rows="3"></textarea></div></section>
+  <section class="card"><h3>Limites</h3><div class="fgrid" id="aj-lim"></div></section>
+  <section class="card"><h3>Tarefas de higienização</h3><div id="aj-hig"></div><div class="rowbtns"><button class="btn sm" id="aj-addhig" type="button">+ Tarefa</button></div></section>
+  <div class="factions"><button class="btn primary" id="aj-save" type="button">Salvar ajustes</button></div>`,
+  bind(){WC=JSON.parse(JSON.stringify(CFG));const self=this;
+    const drawEq=()=>{$('#aj-eq').innerHTML=WC.equip.map((e,i)=>`<div class="fgrid" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;align-items:end;margin-bottom:6px"><div class="field"><label class="lbl" for="aje-n${i}">Nome</label><input id="aje-n${i}" value="${esc(e.nome)}"></div><div class="field"><label class="lbl" for="aje-t${i}">Tipo</label><select id="aje-t${i}">${Object.entries(TIPOEQ).map(([k,n])=>`<option value="${k}"${k===e.tipo?' selected':''}>${n}</option>`).join('')}</select></div><button class="btn sm" data-rmeq="${i}" type="button">Remover</button></div>`).join('');
+      WC.equip.forEach((e,i)=>{$('#aje-n'+i).oninput=x=>e.nome=x.target.value;$('#aje-t'+i).onchange=x=>e.tipo=x.target.value});$$('[data-rmeq]').forEach(b=>b.onclick=()=>{WC.equip.splice(+b.dataset.rmeq,1);drawEq()})};
+    const drawHig=()=>{$('#aj-hig').innerHTML=WC.hig.map((t,i)=>`<div class="fgrid" style="grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(0,1fr) auto;align-items:end;margin-bottom:6px"><div class="field"><label class="lbl" for="ajh-a${i}">Área</label><input id="ajh-a${i}" value="${esc(t.area)}"></div><div class="field"><label class="lbl" for="ajh-t${i}">Tarefa</label><input id="ajh-t${i}" value="${esc(t.tarefa)}"></div><div class="field"><label class="lbl" for="ajh-f${i}">Frequência</label><select id="ajh-f${i}">${Object.entries(FREQ).map(([k,n])=>`<option value="${k}"${k===t.freq?' selected':''}>${n}</option>`).join('')}</select></div><button class="btn sm" data-rmh="${i}" type="button">Remover</button></div>`).join('');
+      WC.hig.forEach((t,i)=>{$('#ajh-a'+i).oninput=x=>t.area=x.target.value;$('#ajh-t'+i).oninput=x=>t.tarefa=x.target.value;$('#ajh-f'+i).onchange=x=>t.freq=x.target.value});$$('[data-rmh]').forEach(b=>b.onclick=()=>{WC.hig.splice(+b.dataset.rmh,1);drawHig()})};
+    drawEq();drawHig();$('#aj-ref').value=WC.refeicoes.join('\n');
+    const LIM=[['congelado','Congelados — máximo (°C)'],['resfriado','Resfriados — máximo (°C)'],['quente','Quente — mínimo (°C)'],['recCong','Recebimento congelados — máximo (°C)'],['recRes','Recebimento resfriados — máximo (°C)'],['amostraH','Guarda de amostras (horas)']];
+    $('#aj-lim').innerHTML=LIM.map(([k,n])=>`<div class="field"><label class="lbl" for="ajl-${k}">${n}</label><input id="ajl-${k}" type="number" step="any" value="${WC.lim[k]}"></div>`).join('');
+    $('#aj-addeq').onclick=()=>{WC.equip.push({id:uid(),nome:'Novo equipamento',tipo:'resfriado'});drawEq()};
+    $('#aj-addhig').onclick=()=>{WC.hig.push({id:uid(),area:'',tarefa:'',freq:'diaria'});drawHig()};
+    $('#aj-save').onclick=async()=>{if(!canSave())return;WC.refeicoes=$('#aj-ref').value.split('\n').map(s=>s.trim()).filter(Boolean);LIM.forEach(([k])=>{const v=Number($('#ajl-'+k).value);if(!isNaN(v))WC.lim[k]=v});
+      WC.equip=WC.equip.filter(e=>e.nome.trim());WC.hig=WC.hig.filter(t=>t.tarefa.trim());
+      try{await FS.setDoc(FS.doc(db,'config','geral'),{equip:WC.equip,refeicoes:WC.refeicoes,lim:WC.lim,hig:WC.hig,por:WHO(),at:new Date().toISOString()});toast('Ajustes salvos.')}catch(e){toast('Não foi possível salvar ('+(e.code||'erro')+').',true)}}}};
+
+/* ---------- roteamento ---------- */
+const ORDER=['hoje','temperaturas','amostras','higienizacao','recebimento','equipe','treinamentos','ocorrencias','revisa','prazos','exportar','ajustes'];
+function drawTabs(){const P=CFGLOADED?pendencias():[];const n=v=>P.filter(p=>p.v===v).length;
+  $('#tabs').innerHTML=ORDER.map(k=>{const c=k==='hoje'?0:n(k);return `<a href="#${k}"${k===CUR?' aria-current="page"':''}>${VIEWS[k].tab}${c?`<span class="n">${c}</span>`:''}</a>`}).join('');
+  const a=$('#tabs a[aria-current]');a&&a.scrollIntoView({block:'nearest',inline:'nearest'})}
+function route(){let h=(location.hash||'#hoje').slice(1);if(!VIEWS[h])h='hoje';CUR=h;const v=VIEWS[h];
+  $('#view').innerHTML=`<h2 class="vt">${v.title}</h2>${v.sub?`<p class="vs">${v.sub}</p>`:''}`+v.html();v.bind&&v.bind();refresh();window.scrollTo(0,0)}
+function refresh(){const v=VIEWS[CUR];try{v&&v.refresh&&v.refresh()}catch(e){console.error(e)}hydrate();drawTabs()}
+addEventListener('hashchange',route);
+setInterval(()=>{if(CUR==='hoje')refresh()},60000);
+
+/* ---------- conexão ---------- */
+async function init(){
+  if(!firebaseConfig||!firebaseConfig.projectId||String(firebaseConfig.projectId).startsWith('COLE')){setConn('Firebase não configurado: nada será salvo.',true);return}
+  try{const app=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');FS=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');db=FS.getFirestore(app.initializeApp(firebaseConfig))}
+  catch(e){setConn('Sem conexão com o servidor. Verifique a internet e recarregue a página.',true);return}
+  online=true;setConn('Conectado: tudo que for registrado aparece para todos que abrirem o app.');
+  const err=e=>{console.error(e);setConn('Não foi possível ler os dados ('+(e.code||'erro')+'). Confira as regras do Firebase.',true)};
+  FS.onSnapshot(FS.query(FS.collection(db,'registros'),FS.where('dia','>=',addDays(TODAY(),-8))),s=>{REGS=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>String(b.at).localeCompare(String(a.at)));refresh()},err);
+  FS.onSnapshot(FS.collection(db,'itens'),s=>{ITENS={};s.forEach(d=>ITENS[d.id]=d.data());refresh()},err);
+  FS.onSnapshot(FS.collection(db,'docs'),s=>{DOCS={};s.forEach(d=>DOCS[d.id]=d.data());refresh()},err);
+  FS.onSnapshot(FS.doc(db,'status','higiene'),s=>{HIG=s.exists()?s.data():{};refresh()},err);
+  FS.onSnapshot(FS.doc(db,'config','geral'),s=>{if(s.exists()){const c=s.data();CFG={...JSON.parse(JSON.stringify(DEF)),...c,lim:{...DEF.lim,...(c.lim||{})}}}const first=!CFGLOADED;CFGLOADED=true;
+    const a=document.activeElement;if(first&&!(a&&$('#view').contains(a)&&a.tagName!=='BUTTON'))route();else refresh()},e=>{CFGLOADED=true;err(e)});
+}
+route();init();
 </script>
 </body>
 </html>
